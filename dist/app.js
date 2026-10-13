@@ -269,7 +269,7 @@
   pageFlip = new St.PageFlip(book, {
     width: 560, height: 700, size: 'stretch', minWidth: 400, maxWidth: 800,
     minHeight: 100, maxHeight: 1000, autoSize: false, usePortrait: mobileQuery.matches,
-    showCover: false, startPage: page, flippingTime: 1100, maxShadowOpacity: .24,
+    showCover: false, startPage: page, flippingTime: 1100, maxShadowOpacity: .30,
     drawShadow: true, mobileScrollSupport: false, showPageCorners: true,
     clickEventForward: true, useMouseEvents: false, swipeDistance: 30
   });

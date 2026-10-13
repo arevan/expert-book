@@ -11,8 +11,13 @@
   }) {
     let state = STATES.has(initialState) ? initialState : 'front';
     let busy = false, pending = null, visibleSide = state === 'back' ? 'back' : 'front';
-    let pageWidth = 0, mobile = false;
+    let pageWidth = 0, surfaceX = 0, mobile = false;
     const previousClip = book.style.clipPath;
+    // A single ground shadow survives both static and moving cover states.
+    const groundShadow = document.createElement('div');
+    groundShadow.className = 'book-ground-shadow';
+    groundShadow.setAttribute('aria-hidden', 'true');
+    holder.prepend(groundShadow);
     const stage = document.createElement('div');
     stage.className = 'book-covers';
     stage.innerHTML = `<div class="book-cover-board">
@@ -30,7 +35,7 @@
       // Use the renderer's fractional origin and dimensions, not rounded clientWidth.
       const rect = getPageGeometry();
       pageWidth = rect.pageWidth;
-      const surfaceX = rect.left + (mobile ? pageWidth : 0);
+      surfaceX = rect.left + (mobile ? pageWidth : 0);
       holder.style.setProperty('--page-scale', pageWidth / 560);
       holder.style.setProperty('--surface-x', surfaceX + 'px');
       holder.style.setProperty('--surface-y', rect.top + 'px');
@@ -67,7 +72,17 @@
     }
     function pose(side, angle) {
       const direction = side === 'front' ? -1 : 1;
+      const openness = angle / 180, rim = 6 * pageWidth / 560;
+      // The footprint grows only after the board crosses the vertical plane.
+      // Before that its projection stays above the stationary half of the book.
+      const extension = Math.max(0, -Math.cos(angle * Math.PI / 180));
+      const shadowLeft = side === 'back' ? surfaceX - rim
+        : mobile ? surfaceX - rim * openness
+          : surfaceX + pageWidth - (pageWidth + rim) * extension;
+      const shadowWidth = mobile ? pageWidth + rim * (1 + openness)
+        : (pageWidth + rim) * (1 + extension);
       return {
+        shadowLeft: shadowLeft + 'px', shadowWidth: shadowWidth + 'px',
         board: `rotateY(${direction * angle}deg)`,
         holder: `translateX(${mobile ? 0 : direction * pageWidth / 2 * (1 - angle / 180)}px)`
       };
@@ -76,6 +91,8 @@
       const value = pose(side, angle);
       board.style.transform = value.board;
       holder.style.transform = value.holder;
+      groundShadow.style.left = value.shadowLeft;
+      groundShadow.style.width = value.shadowWidth;
     }
     function setAccess() {
       const unavailable = busy || state !== 'open';
@@ -138,6 +155,9 @@
       const timing = { duration: DURATION / segments.length, easing: 'linear', fill: 'forwards' };
       operation.animations.push(board.animate(frames.map(frame => ({ offset: frame.offset, transform: frame.board })), timing));
       operation.animations.push(holder.animate(frames.map(frame => ({ offset: frame.offset, transform: frame.holder })), timing));
+      operation.animations.push(groundShadow.animate(frames.map(frame => ({
+        offset: frame.offset, left: frame.shadowLeft, width: frame.shadowWidth
+      })), timing));
       Promise.all(operation.animations.map(animation => animation.finished)).then(
         () => animateSegment(operation, segments, index + 1),
         () => { /* finish() atomically applies the final pose. */ }

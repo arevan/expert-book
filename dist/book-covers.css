@@ -14,16 +14,29 @@
 }
 .endpaper-page:after{
   inset:0;border:0;opacity:1;mix-blend-mode:normal;box-shadow:none;
-  background:linear-gradient(90deg,transparent 93%,#22170b08 96%,#22170b38 100%)
+  background-image:var(--gutter-shadow),linear-gradient(90deg,transparent 93%,#22170b08 96%,#22170b38 100%);
+  background-size:36px 100%,100% 100%;background-repeat:no-repeat;
+  background-position:right -18px top,left top
 }
 .endpaper-page.right-page:after{
-  background:linear-gradient(90deg,#22170b38 0%,#22170b0d 2%,transparent 5%)
+  background-image:var(--gutter-shadow),linear-gradient(90deg,#22170b38 0%,#22170b0d 2%,transparent 5%);
+  background-position:left -18px top,left top
 }
 /* The binding is one continuous case in every open spread. Endpaper paper
  * reaches the fold; the leather turn-in lives behind it, never in its centre. */
 #book-holder{
   --board-rim:calc(6px * var(--page-scale,1));
-  --block-depth:calc(4px * var(--page-scale,1))
+  --block-depth:calc(4px * var(--page-scale,1));
+  --gutter-shadow:linear-gradient(90deg,transparent,#21140918 25%,#21140975 49%,#c5ab7828 55%,#21140918 74%,transparent)
+}
+/* Two soft lobes establish contact and depth. Their footprint follows the
+ * board pose without stacking a second shadow at either animation endpoint. */
+.book-ground-shadow{
+  position:absolute;z-index:0;pointer-events:none;border-radius:2px;
+  top:calc(var(--surface-y,0px) - var(--board-rim));
+  height:calc(var(--surface-height,100%) + 2 * var(--board-rim));
+  box-shadow:0 calc(4px * var(--page-scale,1)) calc(8px * var(--page-scale,1)) #080b0860,
+    0 calc(18px * var(--page-scale,1)) calc(32px * var(--page-scale,1)) #080b0855
 }
 #book-holder>.cover{
   inset:auto;left:calc(var(--surface-x,0px) - var(--board-rim));
@@ -31,27 +44,31 @@
   width:calc(var(--surface-width,100%) + 2 * var(--board-rim));
   height:calc(var(--surface-height,100%) + 2 * var(--board-rim));
   border:0;border-radius:2px;background:#39261c;
-  box-shadow:0 1px 0 #8c654a55,0 9px 18px #10130d55
+  box-shadow:0 1px 0 #8c654a55
 }
 #book-holder>.cover:before{content:'';position:absolute;inset:0;background:url('assets/paper-grain.svg');opacity:.06;pointer-events:none}
 .book .binding{
   top:var(--surface-y,0px);height:var(--surface-height,100%);
   width:calc(36px * var(--page-scale,1));left:calc(50% - 18px * var(--page-scale,1));
-  background:linear-gradient(90deg,transparent,#21140918 25%,#21140966 49%,#c5ab7820 55%,#21140918 74%,transparent);opacity:.8
+  background:var(--gutter-shadow);opacity:1
 }
+
+/* Endpaper surfaces carry this same crease, including the moving clone. */
+#book-holder[data-endpaper=front] .binding,
+#book-holder[data-endpaper=back] .binding{visibility:hidden}
 
 .book-covers{position:absolute;inset:0;z-index:8;perspective:2800px;pointer-events:none;isolation:isolate}
 .book-covers[hidden]{display:none!important}
 .book-cover-board{position:absolute;top:0;width:var(--cover-page-width);height:100%;transform-style:preserve-3d;will-change:transform;pointer-events:none}
 .book-cover-face{position:absolute;inset:calc(-1 * var(--board-rim)) calc(-1 * var(--board-rim)) calc(-1 * var(--board-rim)) 0;display:block;width:auto;height:auto;backface-visibility:hidden;-webkit-backface-visibility:hidden}
 .book-covers[data-side=back] .book-cover-face{left:calc(-1 * var(--board-rim));right:0}
-.book-cover-outside{margin:0;padding:0;border:0;border-radius:3px 5px 5px 3px;overflow:hidden;background:#392418;box-shadow:0 2px 1px #20150e55,0 7px 15px #0a0d092b;transform:translateZ(.5px);pointer-events:auto;touch-action:manipulation;cursor:pointer}
+.book-cover-outside{margin:0;padding:0;border:0;border-radius:3px 5px 5px 3px;overflow:hidden;background:#392418;box-shadow:inset 0 0 0 1px #20150e55;transform:translateZ(.5px);pointer-events:auto;touch-action:manipulation;cursor:pointer}
 .book-cover-outside:disabled{opacity:1;cursor:default}
 .book-cover-outside:focus-visible{outline:2px solid #d8c28d;outline-offset:7px}
 .book-cover-outside:before{content:'';position:absolute;z-index:2;inset:0;pointer-events:none;background:linear-gradient(90deg,#130d0960,#c39c4815 1%,transparent 4%,transparent 97%,#160d0833);box-shadow:inset 0 0 0 1px #ba985333,inset 2px 0 3px #130b0b66}
 .book-covers[data-side=back] .book-cover-outside:before{transform:scaleX(-1)}
 .book-cover-print{position:absolute;inset:0;display:block;background:#3d281e url('assets/antique-cover-v3.png') center/100% 100% no-repeat}
-.book-cover-inside{transform:rotateY(180deg);background:#39261c;overflow:hidden;pointer-events:none;border-radius:2px;box-shadow:0 1px 0 #8c654a55,0 9px 18px #10130d55}
+.book-cover-inside{transform:rotateY(180deg);background:#39261c;overflow:hidden;pointer-events:none;border-radius:2px;box-shadow:0 1px 0 #8c654a55}
 .book-cover-clone{position:absolute;inset:var(--board-rim) 0 var(--board-rim) var(--board-rim);overflow:hidden;pointer-events:none}
 .book-covers[data-side=back] .book-cover-clone{inset:var(--board-rim) var(--board-rim) var(--board-rim) 0}
 .book-cover-clone .page{left:0!important;top:0;display:block!important;border-radius:0;pointer-events:none!important;transform:scale(var(--page-scale,1));transform-origin:top left}
@@ -85,7 +102,8 @@
 @media(max-width:700px){.book-covers{perspective:2100px}#book-holder[data-cover-phase=turning][data-turning-cover]>.cover{clip-path:none}}
 @media(prefers-reduced-motion:reduce){.book-cover-board{will-change:auto}}
 
-#reading-room{overflow:hidden}
+/* Let the soft ground shadow fade beneath the footer without a hard crop. */
+#reading-room{overflow:visible}
 .reader-location{display:flex;align-items:center;justify-content:center;gap:16px;min-height:22px}
 .cover-action{font-family:var(--serif);font-size:20px;line-height:1.1;letter-spacing:.5px;color:#d1bc8f;padding:0 0 3px;border-bottom:1px solid #b49a6255}
 .cover-action:hover:not(:disabled){color:#f0dfb8;border-color:#b49a62}
@@ -94,4 +112,4 @@ body[data-reader-state=open] .cover-action{font-family:var(--sans);font-size:10p
 .progress .cover-progress:before{width:7px;height:9px;top:6px;left:8px;border:1px solid #7d806f;border-radius:1px;background:none;box-shadow:inset 2px 0 0 #7d806f44}
 .progress .cover-progress[aria-current=true]:before{width:7px;height:9px;left:8px;top:6px;border-color:#c0aa76;background:#c0aa7622;border-radius:1px}
 @media(max-width:700px){.reader-location{gap:9px}.cover-action{font-size:18px}.reader-location .current-chapter{font-size:14px}body[data-reader-state=front] .navigation-hint:after{content:'Нажмите на обложку'}body[data-reader-state=back] .navigation-hint:after{content:'Можно открыть снова'}body[data-reader-state=cover-motion] .navigation-hint:after{content:''}}
-@media print{.book-covers{display:none!important}#book-holder{transform:none!important}#book{clip-path:none!important;visibility:visible!important}#reading-room{overflow:visible}}
+@media print{.book-ground-shadow,.book-covers{display:none!important}#book-holder{transform:none!important}#book{clip-path:none!important;visibility:visible!important}#reading-room{overflow:visible}}
