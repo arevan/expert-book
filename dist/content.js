@@ -28,7 +28,7 @@
   window.BOOK_CONTENT = [
     {
       id: 'origins', chapter: 'I', title: 'История возникновения',
-      left: `<figure class="chapter-illustration"><div class="chapter-plate"><img src="assets/origins-map-v1.png" alt="Старинная карта дизайнерских земель: Junior Designer, Middle Designer, Senior, Lead, Head of Design и Expert Designer. Lead и Expert — соседние ветви; внизу два картографа." draggable="false"></div><figcaption>Карта дизайнерских земель.</figcaption></figure>`,
+      left: `<figure class="chapter-illustration"><div class="chapter-plate"><img src="assets/origins-map-v2.png" alt="Старинная карта дизайнерских земель: Junior Designer, Middle Designer, Senior, Lead, Head of Design и Expert Designer. Путь Junior → Middle → Senior; затем ветви Lead и Expert. Внизу два картографа." draggable="false"></div><figcaption>Карта дизайнерских земель.</figcaption></figure>`,
       right: chapterText('I', 'История<br>возникновения', 'Как мы с Серёгой затащили первые драфты', [
         'С чего начался разговор о новой роли.',
         'Какими были первые драфты.',

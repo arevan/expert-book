@@ -1,0 +1,22 @@
+Built-in Imagegen edit mode.
+Source: origins-map-v1.png
+Final: origins-map-v2.png
+
+FIRST EDIT
+Use case: precise-object-edit.
+Edit target: the attached original antique engraved map.
+Task: make ONE local cartographic correction. The map must show a progression JUNIOR DESIGNER → MIDDLE DESIGNER → SENIOR, never a direct Junior-to-Senior shortcut.
+REMOVE the small UPPER bridge immediately northeast of JUNIOR DESIGNER, southwest of SENIOR, at approximately x=31.5% and y=58.5% of the image. This is the small bridge beneath the waterfall and above the JUNIOR DESIGNER label. Also erase the pale diagonal road joining Junior's northern village to that removed upper bridge, replacing that short road segment with natural trees/rock engraving. Fill the former upper bridge with an unbroken river gorge and hatched cliffs consistent with adjacent terrain, so no crossing, stepping stones, road, or tunnel remains across that Junior–Senior boundary.
+KEEP the LOWER bridge between JUNIOR DESIGNER and MIDDLE DESIGNER at approximately x=41%, y=67.5%; it must stay open and clearly connected. KEEP the existing curving road from MIDDLE DESIGNER north toward SENIOR. These are the only sequence of passages out of Junior toward Senior.
+Invariants: all six role names exactly as existing, position, size, font, and spelling unchanged. Preserve every other bridge and road, all castles, ships, compass rose, coastline, border, two cartographers, fine black/brown copperplate engraving on warm aged parchment, image size and composition. Keep all pixels outside the small upper-bridge/path edit region as close to original as possible. No broad redesign, no arrows, no new text, no color changes. Opaque paper background.
+
+SECOND EDIT (final)
+Use case: precise-object-edit.
+Edit target: attached revised antique engraved map. Preserve its corrected JUNIOR DESIGNER → MIDDLE DESIGNER → SENIOR progression; the upper Junior-to-Senior bridge is correctly absent and must stay absent.
+
+ONE precise restoration: restore a narrow winding road from the west side of the central SENIOR castle to the southeastern hamlet of LEAD, like an old map road. It should run from approximately (44% width, 47% height) west-northwest to (34%, 40.5%). Where it crosses the thin upper river at approximately (39.3%, 44.8%), add ONE small low stone arch bridge. This crossing sits immediately west of the SENIOR castle and well ABOVE the SENIOR label. Keep this road tightly confined to the Senior-to-Lead area. No southern branch.
+
+Keep the broad river gorge southwest of SENIOR and northeast of JUNIOR completely unbridged; NO direct Junior-to-Senior route at (31.5%,58.5%). Junior's only exit stays the LOWER existing bridge toward MIDDLE DESIGNER at (41%,67.5%). Keep Middle's northern road to Senior.
+
+Everything else unchanged: all roles, exact labels and typographic sizes/positions, geography, coastline, castles, compass, border, artists, tiny engraved lines, parchment tone, contrast and page dimensions. No extra labels/arrows. No redesign. Render in identical black-brown engraved line technique.
+
