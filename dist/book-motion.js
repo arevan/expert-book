@@ -9,7 +9,7 @@
   const ease = t => t * t * t * (t * (t * 6 - 15) + 10);
   const settleEase = t => 1 - Math.pow(1 - t, 3);
 
-  window.installBookMotion = function (app, element, reducedMotion) {
+  window.installBookMotion = function (app, element, reducedMotion, options = {}) {
     const flip = app.getFlipController();
     const renderer = app.getRender();
     let gesture = null, peekReturning = false;
@@ -114,6 +114,12 @@
       const bookPoint = renderer.convertToBook(point);
       const direction = flip.getDirectionByPoint(bookPoint);
       const corner = bookPoint.y >= rect.height / 2 ? 'bottom' : 'top';
+      if (options.canBoundary?.(direction)) {
+        gesture = { id: event.pointerId, boundary: direction, start: point, last: point, lastTime: event.timeStamp, velocity: 0, moved: false };
+        element.setPointerCapture(event.pointerId);
+        event.preventDefault();
+        return;
+      }
       const current = flip.getCalculation();
       const sameFold = current && current.getDirection() === direction && current.getCorner() === corner;
       if (!sameFold) {
@@ -139,12 +145,18 @@
       if (elapsed > 0) gesture.velocity = (point.x - gesture.last.x) / elapsed;
       gesture.last = point; gesture.lastTime = event.timeStamp;
       if (Math.hypot(point.x - gesture.start.x, point.y - gesture.start.y) > 5) gesture.moved = true;
-      if (gesture.moved && !reducedMotion.matches) app.userMove(point, true);
+      if (gesture.boundary == null && gesture.moved && !reducedMotion.matches) app.userMove(point, true);
     });
     function release(event, cancelled = false) {
       if (!gesture || gesture.id !== event.pointerId) return;
       const point = pointOf(event), held = gesture;
       gesture = null;
+      if (held.boundary != null) {
+        if (element.hasPointerCapture(event.pointerId)) element.releasePointerCapture(event.pointerId);
+        const travel = (point.x - held.start.x) * (held.boundary === 0 ? -1 : 1);
+        if (!cancelled && (!held.moved || travel > 30)) options.onBoundary?.(held.boundary);
+        return;
+      }
       app.userStop(point, true); // no new swipe: finish the existing fold instead
       if (element.hasPointerCapture(event.pointerId)) element.releasePointerCapture(event.pointerId);
       if (!held.moved) {
@@ -177,6 +189,20 @@
       if (!gesture && flip.getState() === 'fold_corner') flip.showCorner({ x: -100, y: -100 });
     });
     // Reset completed pages only when the window changes size, never in a drag.
-    return { finish: () => renderer.finishAnimation() };
+    return {
+      finish: () => renderer.finishAnimation(),
+      suspend() {
+        renderer.finishAnimation();
+        if (gesture) {
+          if (gesture.boundary == null) app.userStop(gesture.last, true);
+          if (element.hasPointerCapture(gesture.id)) element.releasePointerCapture(gesture.id);
+          gesture = null;
+        }
+        renderer.animation = null;
+        peekReturning = false;
+        renderer.setBottomPage(null); renderer.setFlippingPage(null); renderer.clearShadow();
+        flip.reset(); flip.setState('read');
+      }
+    };
   };
 })();

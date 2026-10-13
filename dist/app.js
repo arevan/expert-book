@@ -10,10 +10,10 @@
   };
   const spreads = [title, ...(window.BOOK_CONTENT || [])];
   const book = $('#book'), holder = $('#book-holder');
-  let pageFlip, bookMotion;
+  let pageFlip, bookMotion, covers;
   const mobileQuery = matchMedia('(max-width: 700px)'), reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   const maxPage = spreads.length * 2 - 1;
-  let page = 0, busy = false, lastSize = "";
+  let page = 0, busy = false, coverBusy = false, coverState = 'front', lastSize = "";
   const storage = {
     read(key, fallback) { try { return JSON.parse(localStorage.getItem('expert-cookbook:' + key)) ?? fallback; } catch { return fallback; } },
     write(key, value) { try { localStorage.setItem('expert-cookbook:' + key, JSON.stringify(value)); return true; } catch { return false; } }
@@ -21,10 +21,14 @@
   const checks = storage.read('checks', {});
   function fromHash() {
     const raw = location.hash.slice(1).split('/');
+    if (raw[0] === 'back-cover') return { state: 'back', page: mobileQuery.matches ? maxPage : maxPage - 1 };
     const i = spreads.findIndex(s => s.id === raw[0]);
-    return i < 0 ? 0 : i * 2 + (mobileQuery.matches && raw[1] === '2' ? 1 : 0);
+    return i < 0 ? { state: 'front', page: 0 }
+      : { state: 'open', page: i * 2 + (mobileQuery.matches && raw[1] === '2' ? 1 : 0) };
   }
-  page = fromHash();
+  const initialLocation = fromHash();
+  page = initialLocation.page;
+  coverState = initialLocation.state;
   function markChecks(el) {
     el.querySelectorAll('[data-check]').forEach(button => { button.setAttribute('aria-pressed', !!checks[button.dataset.check]); button.setAttribute('aria-label', button.textContent.trim()); });
   }
@@ -42,15 +46,30 @@
   function render() { updateUI(); }
   function updateUI() {
     const i = Math.floor(page / 2), spread = spreads[i];
+    const closed = coverState !== 'open', locked = busy || coverBusy;
+    const atStart = page === 0;
+    const atEnd = mobileQuery.matches ? page === maxPage : i === spreads.length - 1;
+    $('#current-chapter').hidden = closed;
     $('#current-chapter').textContent = (spread.chapter ? spread.chapter + '. ' : '') + spread.title;
-    $('#page-count').textContent = mobileQuery.matches ? `${String(page + 1).padStart(2, '0')} / ${maxPage + 1}` : `${String(i + 1).padStart(2, '0')} / ${spreads.length}`;
-    const atStart = page === 0, atEnd = mobileQuery.matches ? page === maxPage : i === spreads.length - 1;
-    [$('#prev')].forEach(b => b.disabled = atStart || busy);
-    [$('#next')].forEach(b => b.disabled = atEnd || busy);
-    document.querySelectorAll('[data-spread]').forEach(b => b.setAttribute('aria-current', Number(b.dataset.spread) === i));
-    $('#announce').textContent = `${spread.title}. ${mobileQuery.matches ? 'Страница ' + (page + 1) + ' из ' + (maxPage + 1) : 'Разворот ' + (i + 1) + ' из ' + spreads.length}`;
-    document.title = `${spread.title} · Методы подготовки эксперта`;
-    const hash = '#' + spread.id + (mobileQuery.matches && page % 2 ? '/2' : '');
+    $('#page-count').textContent = closed ? (coverState === 'front' ? 'ТОМ I' : 'MMXXVI')
+      : mobileQuery.matches ? `${String(page + 1).padStart(2, '0')} / ${maxPage + 1}` : `${String(i + 1).padStart(2, '0')} / ${spreads.length}`;
+    $('#prev').disabled = locked || coverState === 'front';
+    $('#next').disabled = locked || coverState === 'back';
+    $('#prev').setAttribute('aria-label', coverState === 'back' ? 'Открыть последнюю главу' : atStart ? 'Закрыть переднюю обложку' : 'Предыдущий разворот');
+    $('#next').setAttribute('aria-label', coverState === 'front' ? 'Открыть книгу' : atEnd ? 'Закрыть книгу' : 'Следующий разворот');
+    $('#notes-open').disabled = closed || coverBusy;
+    const action = $('#cover-action');
+    action.hidden = !closed && !atStart && !atEnd;
+    action.disabled = locked;
+    action.textContent = coverState === 'front' ? 'Открыть книгу →' : coverState === 'back' ? '← Вернуться к последней главе' : 'Закрыть книгу';
+    document.querySelectorAll('[data-spread]').forEach(b => b.setAttribute('aria-current', !closed && Number(b.dataset.spread) === i));
+    document.querySelectorAll('[data-cover]').forEach(b => b.setAttribute('aria-current', b.dataset.cover === coverState));
+    const label = closed ? (coverState === 'front' ? 'Передняя обложка' : 'Книга закрыта') : spread.title;
+    $('#announce').textContent = closed ? label : `${spread.title}. ${mobileQuery.matches ? 'Страница ' + (page + 1) + ' из ' + (maxPage + 1) : 'Разворот ' + (i + 1) + ' из ' + spreads.length}`;
+    $('.navigation-hint').innerHTML = coverState === 'front' ? 'Нажмите на обложку или <kbd>→</kbd>' : coverState === 'back' ? '<kbd>←</kbd> Вернуться к последней главе' : 'Листайте <kbd>←</kbd> <kbd>→</kbd> или потяните за угол';
+    document.body.dataset.readerState = coverBusy ? 'cover-motion' : coverState;
+    document.title = `${label} · Методы подготовки эксперта`;
+    const hash = closed ? (coverState === 'front' ? '#cover' : '#back-cover') : '#' + spread.id + (mobileQuery.matches && page % 2 ? '/2' : '');
     try { history.replaceState(null, '', hash); } catch { /* file previews can restrict history */ }
   }
   function fitBook() {
@@ -60,6 +79,7 @@
     const scale = Math.max(.1, Math.min((room.clientWidth - (mobile ? 48 : 168)) / width, (room.clientHeight - 38) / 700, 1.35));
     const sizeKey = `${mobile}:${scale.toFixed(5)}`;
     if (lastSize === sizeKey) return;
+    covers?.finish();
     bookMotion?.finish();
     lastSize = sizeKey;
     holder.style.width = width * scale + 'px';
@@ -71,17 +91,46 @@
       page = pageFlip.getCurrentPageIndex();
       updateUI();
     }
+    covers?.sync();
   }
   function turnTo(target, animate = true) {
-    if (busy || !pageFlip) return;
+    if (busy || coverBusy || !pageFlip) return;
     target = Math.max(0, Math.min(maxPage, target));
     if (!mobileQuery.matches) target -= target % 2;
+    if (coverState !== 'open') {
+      bookMotion?.suspend();
+      pageFlip.turnToPage(target);
+      covers.transition('open', animate);
+      return;
+    }
     if (target === page) return;
     if (!animate || reducedMotion.matches) pageFlip.turnToPage(target);
     else pageFlip.flip(target, 'bottom');
   }
-  function next() { turnTo(page + (mobileQuery.matches ? 1 : 2)); }
-  function prev() { turnTo(page - (mobileQuery.matches ? 1 : 2)); }
+  function closeBook(side, animate = true) {
+    if (busy || coverBusy || !covers || coverState === side) return;
+    bookMotion.suspend();
+    pageFlip.turnToPage(side === 'front' ? 0 : (mobileQuery.matches ? maxPage : maxPage - 1));
+    covers.transition(side, animate && coverState === 'open');
+  }
+  function activateCover() {
+    if (coverState === 'front') turnTo(0);
+    else if (coverState === 'back') turnTo(maxPage);
+    else closeBook(page === 0 ? 'front' : 'back');
+  }
+  function next() {
+    if (coverState === 'front') { turnTo(0); return; }
+    if (coverState === 'back') return;
+    if (page >= (mobileQuery.matches ? maxPage : maxPage - 1)) closeBook('back');
+    else turnTo(page + (mobileQuery.matches ? 1 : 2));
+  }
+  function prev() {
+    if (coverState === 'back') { turnTo(maxPage); return; }
+    if (coverState === 'front') return;
+    if (page === 0) closeBook('front');
+    else turnTo(page - (mobileQuery.matches ? 1 : 2));
+  }
+  $('#cover-action').addEventListener('click', activateCover);
   $('#next').addEventListener('click', next); $('#prev').addEventListener('click', prev);
   const progress = $('#progress'), toc = $('#toc-list');
   spreads.forEach((spread, i) => {
@@ -92,10 +141,20 @@
     row.innerHTML = `<span class="toc-num">${String(i + 1).padStart(2, '0')}</span><span class="toc-title">${spread.title}</span><span class="toc-page">${i * 2 + 1}</span>`;
     row.addEventListener('click', () => { $('#toc-dialog').close(); turnTo(i * 2); }); toc.append(row);
   });
+  ['front', 'back'].forEach(side => {
+    const dot = document.createElement('button');
+    dot.dataset.cover = side;
+    dot.className = 'cover-progress';
+    dot.title = side === 'front' ? 'Передняя обложка' : 'Задняя обложка';
+    dot.setAttribute('aria-label', dot.title);
+    dot.addEventListener('click', () => closeBook(side));
+    side === 'front' ? progress.prepend(dot) : progress.append(dot);
+  });
   function openDialog(id) { if (!$(id).open) $(id).showModal(); }
   $('#toc-open').addEventListener('click', () => openDialog('#toc-dialog'));
   $('#help-open').addEventListener('click', () => openDialog('#help-dialog'));
   function openNotes() {
+    if (coverState !== 'open' || coverBusy) return;
     const spread = spreads[Math.floor(page / 2)];
     $('#note-title').textContent = spread.title;
     $('#note-text').value = storage.read('note:' + spread.id, spread.note);
@@ -129,10 +188,10 @@
   document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) { document.body.classList.remove('presenting'); $('#fullscreen').setAttribute('aria-pressed', 'false'); } fitBook(); });
   document.addEventListener('keydown', event => {
     if (document.querySelector('dialog[open]') || /^(INPUT|TEXTAREA|SELECT)$/.test(event.target.tagName) || event.metaKey || event.ctrlKey || event.altKey) return;
-    if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.code === 'Space' && event.target === document.body) { event.preventDefault(); next(); }
+    if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.code === 'Space' && !event.target.closest('button,a')) { event.preventDefault(); next(); }
     if (event.key === 'ArrowLeft' || event.key === 'PageUp') { event.preventDefault(); prev(); }
-    if (event.key === 'Home') { event.preventDefault(); turnTo(0); }
-    if (event.key === 'End') { event.preventDefault(); turnTo(maxPage); }
+    if (event.key === 'Home') { event.preventDefault(); closeBook('front'); }
+    if (event.key === 'End') { event.preventDefault(); closeBook('back'); }
     if (event.code === 'KeyT') openDialog('#toc-dialog');
     if (event.code === 'KeyN') openNotes();
     if (event.code === 'KeyF') togglePresentation();
@@ -144,8 +203,14 @@
     document.querySelectorAll('[data-check="' + button.dataset.check + '"]').forEach(b => b.setAttribute('aria-pressed', checks[button.dataset.check]));
     storage.write('checks', checks);
   });
-  window.addEventListener('hashchange', () => turnTo(fromHash(), false));
-  $('.brand').addEventListener('click', event => { event.preventDefault(); turnTo(0); });
+  window.addEventListener('hashchange', () => {
+    const target = fromHash();
+    covers?.finish();
+    bookMotion?.suspend();
+    if (target.state === 'open') turnTo(target.page, false);
+    else closeBook(target.state, false);
+  });
+  $('.brand').addEventListener('click', event => { event.preventDefault(); closeBook('front'); });
   fitBook();
   const sheets = spreads.flatMap((spread, i) => [0, 1].map(side => {
     const sheet = document.createElement('article');
@@ -176,7 +241,18 @@
   // Keep the spine in the renderer's layer stack: static paper (1), spine (2),
   // revealed paper (3), turning leaf (5). A sibling above #book covers every leaf.
   book.querySelector('.stf__block').append(holder.querySelector('.binding'));
-  bookMotion = window.installBookMotion(pageFlip, book, reducedMotion);
+  bookMotion = window.installBookMotion(pageFlip, book, reducedMotion, {
+    canBoundary: direction => coverState === 'open' && !coverBusy && (direction === 1 ? page === 0 : page >= (mobileQuery.matches ? maxPage : maxPage - 1)),
+    onBoundary: direction => direction === 1 ? prev() : next()
+  });
+  covers = window.installBookCovers({
+    holder, book, reducedMotion, isMobile: () => mobileQuery.matches,
+    initialState: coverState,
+    getPageSurface: side => sheets[mobileQuery.matches ? page : page - page % 2 + (side === 'back' ? 1 : 0)].querySelector('.page'),
+    onChange: state => { coverState = state.state; coverBusy = state.busy; updateUI(); },
+    onActivate: activateCover
+  });
+  book.dataset.state ||= 'read';
   new ResizeObserver(fitBook).observe($('#reading-room'));
   render();
   document.fonts.ready.then(fitBook);
