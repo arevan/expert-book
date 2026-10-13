@@ -7,3 +7,5 @@ Create only one chapter illustration at a time. Chapter III is accepted. Chapter
 Keep the title engraving and chapter I map unchanged. Keep development on localhost; do not deploy without a new user request.
 The app is static HTML/CSS/JS in dist. Run: python3 -m http.server 4173 --bind 127.0.0.1 --directory dist
 Preserve the page-turn behavior and the spine inside .stf__block, below turning pages.
+
+Chapter IV combat study requested by the user: two matching frames, dist/assets/studies/duel-windup-v1.png and duel-strike-v1.png. The recurring woman knight is on the right with the historic Tinkoff crest; the black knight is on the left with a shaggy wide-eyed demon emblem. These are separate alternatives for review, not yet selected for the book. Only the action changes between the frames.
