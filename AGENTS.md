@@ -13,3 +13,5 @@ Chapter V: user selected the defense itself, not knighting. Active image is dist
 Generate chapter illustrations one at a time. Discuss new scenes with the user before generating them; follow the latest explicit user selection.
 
 The reader has physical endpapers: lining0, flyleaf1, content2..13, flyleaf14, lining15. Keep six content spreads and their original folios. Desktop boundaries0/14; mobile boundaries1/14. A turning board exposes only the stationary flyleaf; never clone a content page as its inner face. Closed state hides the renderer and spread-sized stack. Outside uses antique-cover-v3.png without text; title running headers say T DESIGN.
+
+Endpapers use matching matte brown paper: a pastedown inset in the leather board and a free flyleaf. data-endpaper drives the static stack: front = right half, back = left half, content = full spread; mobile is always full width. Keep the stack plus its shadow inside the cover overhang.

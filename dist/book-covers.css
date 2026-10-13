@@ -1,10 +1,17 @@
 /* A physical lining and flyleaf at either end keep boards separate from content. */
-.endpaper-page{padding:0;overflow:hidden}
-.endpaper-lining{background:#38251d url('assets/antique-cover-v1.png') center/100% 100% no-repeat!important;box-shadow:inset 0 0 0 5px #352017,inset 0 0 26px #140c0855!important}
-.endpaper-lining:before{opacity:.035}
-.endpaper-lining:after{inset:28px;border:1px solid #bc95623d;box-shadow:inset 0 0 0 3px #2e1b1233}
-.endpaper-flyleaf{background-color:#ede1c2;background-image:linear-gradient(90deg,#9a82502a,transparent 7%,#f5eacf22 93%,#9a82501c);box-shadow:inset 0 0 28px #a58d5425}
-.endpaper-flyleaf:after{box-shadow:inset 0 0 2px #9b876b60}
+.endpaper-page{padding:0;overflow:hidden;--endpaper-tone:#78533b;--endpaper-texture:radial-gradient(ellipse at 30% 20%,#98785424,transparent 68%),linear-gradient(105deg,#25180e22,transparent 17%,#b2905d0c 80%,#261a1122)}
+.endpaper-lining{background:#38251d url('assets/antique-cover-v3.png') center/100% 100% no-repeat!important;box-shadow:inset 0 0 0 3px #352017!important}
+/* The pastedown is paper glued into the leather board, not a second leather cover. */
+.endpaper-lining:before{inset:14px 6px 14px 14px;opacity:1;z-index:1;filter:none;mix-blend-mode:normal;background-color:var(--endpaper-tone);background-image:var(--endpaper-texture);background-repeat:no-repeat;box-shadow:0 0 1px 1px #24150d80,inset 0 1px 2px #c4a37425,inset 0 -1px 2px #21140e33;border-radius:1px}
+.endpaper-lining.right-page:before{inset:14px 14px 14px 6px}
+.endpaper-lining:after{inset:14px 6px 14px 14px;border:0;background:url('assets/paper-grain.svg') repeat;opacity:.065;mix-blend-mode:multiply;box-shadow:none}
+.endpaper-lining.right-page:after{inset:14px 14px 14px 6px}
+.endpaper-flyleaf{background-color:var(--endpaper-tone);background-image:var(--endpaper-texture);box-shadow:inset 0 0 20px #28190e22}
+.endpaper-flyleaf:before{opacity:.065}
+.endpaper-flyleaf:after{box-shadow:inset 0 0 2px #38221266}
+.endpaper-flyleaf.right-page{box-shadow:inset 12px 0 14px -12px #28130cbb,inset 0 0 1px #38221244}
+.endpaper-flyleaf.left-page{box-shadow:inset -12px 0 14px -12px #28130cbb,inset 0 0 1px #38221244}
+#book-holder[data-endpaper=front] .binding,#book-holder[data-endpaper=back] .binding{width:14px;left:calc(50% - 7px);background:linear-gradient(90deg,transparent,#2b160b44 35%,#1e100e90 49%,#b8884933 53%,#25140b50 63%,transparent);opacity:.65}
 
 .book-covers{position:absolute;inset:0;z-index:8;perspective:2800px;pointer-events:none;isolation:isolate}
 .book-covers[hidden]{display:none!important}
@@ -20,6 +27,15 @@
 .book-cover-clone{position:absolute;inset:0;overflow:hidden;pointer-events:none}
 .book-cover-clone .page{left:0!important;top:0;display:block!important;border-radius:0;pointer-events:none!important;transform:scale(var(--page-scale,1));transform-origin:top left}
 .book-cover-inside *{pointer-events:none!important}
+
+/* The paper block stays inside the board overhang, including its lower edge.
+ * An endpaper spread has paper on one side only; its leather lining has no stack. */
+#book-holder>.paper-stack{inset:3px -3px -7px;transform:none;border-radius:2px 5px 3px 3px;box-shadow:0 2px 0 #b9aa87,0 4px 0 #776147}
+@media(min-width:701px){
+  #book-holder[data-endpaper=front]>.paper-stack{left:50%;border-bottom-left-radius:0}
+  #book-holder[data-endpaper=back]>.paper-stack{right:50%;border-bottom-right-radius:0}
+}
+@media(max-width:700px){#book-holder>.paper-stack{inset:3px -2px -4px}}
 
 /* Closed books have no exposed renderer or protruding spread-sized paper stack. */
 #book-holder[data-cover-phase=closed]>#book{visibility:hidden}

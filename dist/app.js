@@ -63,6 +63,7 @@
   function updateUI() {
     const i = contentIndex(page), endpaper = isEndpaper(page), spread = endpaper ? null : spreads[i];
     const endpaperTitle = page < firstContentPage ? 'Передний форзац' : 'Задний форзац';
+    holder.dataset.endpaper = endpaper ? (page < firstContentPage ? 'front' : 'back') : 'none';
     const closed = coverState !== 'open', locked = busy || coverBusy;
     const atStart = page <= frontBoundaryPage(), atEnd = page >= backBoundaryPage();
     const contentPage = page - firstContentPage;
