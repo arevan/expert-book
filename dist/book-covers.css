@@ -1,36 +1,34 @@
-/* The boards sit outside the page renderer; its paper/spine layers stay intact. */
-.book-covers{position:absolute;inset:0;z-index:8;perspective:2600px;pointer-events:none;isolation:isolate}
+/* A physical lining and flyleaf at either end keep boards separate from content. */
+.endpaper-page{padding:0;overflow:hidden}
+.endpaper-lining{background:#38251d url('assets/antique-cover-v1.png') center/100% 100% no-repeat!important;box-shadow:inset 0 0 0 5px #352017,inset 0 0 26px #140c0855!important}
+.endpaper-lining:before{opacity:.035}
+.endpaper-lining:after{inset:28px;border:1px solid #bc95623d;box-shadow:inset 0 0 0 3px #2e1b1233}
+.endpaper-flyleaf{background-color:#ede1c2;background-image:linear-gradient(90deg,#9a82502a,transparent 7%,#f5eacf22 93%,#9a82501c);box-shadow:inset 0 0 28px #a58d5425}
+.endpaper-flyleaf:after{box-shadow:inset 0 0 2px #9b876b60}
+
+.book-covers{position:absolute;inset:0;z-index:8;perspective:2800px;pointer-events:none;isolation:isolate}
 .book-covers[hidden]{display:none!important}
 .book-cover-board{position:absolute;top:0;width:var(--cover-page-width);height:100%;transform-style:preserve-3d;will-change:transform;pointer-events:none}
 .book-cover-face{position:absolute;inset:0;display:block;width:100%;height:100%;backface-visibility:hidden;-webkit-backface-visibility:hidden}
-.book-cover-outside{margin:0;padding:0;border:0;border-radius:2px 5px 6px 2px;overflow:hidden;text-align:center;background:#392418;box-shadow:0 2px 0 #221b12,1px 5px 0 #493422,2px 7px 1px #1c150e,0 17px 28px #080b0880;transform:translateZ(1px);pointer-events:auto;touch-action:manipulation;color:#d0aa69;cursor:pointer}
+.book-cover-outside{margin:0;padding:0;border:0;border-radius:3px 5px 5px 3px;overflow:hidden;background:#392418;box-shadow:0 2px 1px #20150e55,0 7px 15px #0a0d092b;transform:translateZ(.5px);pointer-events:auto;touch-action:manipulation;cursor:pointer}
 .book-cover-outside:disabled{opacity:1;cursor:default}
-.book-cover-outside:hover:not(:disabled){color:#d0aa69}
-.book-cover-outside:focus-visible{outline:2px solid #e5cc94;outline-offset:9px}
-.book-cover-outside:before{content:'';position:absolute;z-index:2;inset:0;pointer-events:none;background:linear-gradient(90deg,#120d0980,#c39c4820 1%,#100c0822 2%,transparent 5%,transparent 95%,#160d0855);box-shadow:inset 0 0 0 1px #ba98533d,inset 2px 0 3px #130b0b88,inset -1px 0 2px #edcb7040}
-.book-covers[data-side=back] .book-cover-outside{border-radius:5px 2px 2px 6px}
+.book-cover-outside:focus-visible{outline:2px solid #d8c28d;outline-offset:7px}
+.book-cover-outside:before{content:'';position:absolute;z-index:2;inset:0;pointer-events:none;background:linear-gradient(90deg,#130d0960,#c39c4815 1%,transparent 4%,transparent 97%,#160d0833);box-shadow:inset 0 0 0 1px #ba985333,inset 2px 0 3px #130b0b66}
 .book-covers[data-side=back] .book-cover-outside:before{transform:scaleX(-1)}
-.book-cover-print{position:absolute;left:0;top:0;display:block;width:560px;height:700px;transform:scale(var(--cover-scale));transform-origin:top left;background:#3d281e url('assets/antique-cover-v1.png') center/100% 100% no-repeat;color:#cda86c;font-family:var(--serif);text-shadow:0 1px 0 #f0d99a70,0 -1px 1px #1d110acc,0 2px 2px #120c0890}
-.book-cover-front-design,.book-cover-back-design{position:absolute;inset:0;display:flex;align-items:center;flex-direction:column}
-.book-cover-eyebrow{font-size:12px;line-height:1.5;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;margin-top:151px;color:#c6a16a}
-.book-cover-title{display:flex;flex-direction:column;margin-top:55px;font-size:57px;line-height:1.01;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#d3b47b}
-.book-cover-title-small{font-size:29px;line-height:1.65;letter-spacing:3.9px}
-.book-cover-ornament{display:block;width:146px;height:57px;color:#bea16a;margin-top:31px}
-.book-cover-ornament svg{width:100%;height:100%;stroke-width:1;filter:drop-shadow(0 1px 0 #edc37b55) drop-shadow(0 -1px 0 #1a100ac9)}
-.book-cover-date{font-size:13px;font-weight:600;line-height:1;letter-spacing:3.3px;margin-top:47px;color:#bea270}
-.book-cover-back-design{justify-content:center;padding-bottom:7px}
-.book-cover-back-design .book-cover-ornament{margin:0;width:157px;height:61px}
-.book-cover-mark{font-size:12px;line-height:1;letter-spacing:3.4px;margin-top:31px;font-weight:600;color:#c3a778}
-.book-covers[data-side=front] .book-cover-back-design,.book-covers[data-side=back] .book-cover-front-design{display:none}
-.book-cover-inside.book{position:absolute;inset:0;width:100%;height:100%;min-width:0;min-height:0;transform:rotateY(180deg);perspective:none;background:var(--paper);overflow:hidden;z-index:auto;border-radius:0;pointer-events:none;box-shadow:0 0 0 1px #6f573d45}
-.book-cover-clone{position:absolute;inset:0;width:100%;height:100%;overflow:hidden;pointer-events:none}
+.book-cover-print{position:absolute;inset:0;display:block;background:#3d281e url('assets/antique-cover-v3.png') center/100% 100% no-repeat}
+.book-cover-inside{transform:rotateY(180deg);background:#38251d;overflow:hidden;pointer-events:none;border-radius:2px;box-shadow:0 2px 5px #120d0b22}
+.book-cover-clone{position:absolute;inset:0;overflow:hidden;pointer-events:none}
 .book-cover-clone .page{left:0!important;top:0;display:block!important;border-radius:0;pointer-events:none!important;transform:scale(var(--page-scale,1));transform-origin:top left}
 .book-cover-inside *{pointer-events:none!important}
-@media(max-width:700px){.book-covers{perspective:1900px}.book-cover-outside{box-shadow:0 2px 0 #221b12,1px 4px 0 #493422,2px 6px 1px #1c150e,0 12px 22px #080b0870}}
-@media(prefers-reduced-motion:reduce){.book-cover-board{will-change:auto}}
-@media print{.book-covers{display:none!important}}
 
-/* Reader controls at the two covers and the first/last interior spread. */
+/* Closed books have no exposed renderer or protruding spread-sized paper stack. */
+#book-holder[data-cover-phase=closed]>#book{visibility:hidden}
+#book-holder[data-cover-phase=closed]>.cover,#book-holder[data-cover-phase=closed]>.paper-stack,
+#book-holder[data-cover-phase=turning]>.cover,#book-holder[data-cover-phase=turning]>.paper-stack{visibility:hidden}
+#book-holder[data-cover-phase=turning] .binding{visibility:hidden}
+@media(max-width:700px){.book-covers{perspective:2100px}}
+@media(prefers-reduced-motion:reduce){.book-cover-board{will-change:auto}}
+
 #reading-room{overflow:hidden}
 .reader-location{display:flex;align-items:center;justify-content:center;gap:16px;min-height:22px}
 .cover-action{font-family:var(--serif);font-size:20px;line-height:1.1;letter-spacing:.5px;color:#d1bc8f;padding:0 0 3px;border-bottom:1px solid #b49a6255}
@@ -40,7 +38,4 @@ body[data-reader-state=open] .cover-action{font-family:var(--sans);font-size:10p
 .progress .cover-progress:before{width:7px;height:9px;top:6px;left:8px;border:1px solid #7d806f;border-radius:1px;background:none;box-shadow:inset 2px 0 0 #7d806f44}
 .progress .cover-progress[aria-current=true]:before{width:7px;height:9px;left:8px;top:6px;border-color:#c0aa76;background:#c0aa7622;border-radius:1px}
 @media(max-width:700px){.reader-location{gap:9px}.cover-action{font-size:18px}.reader-location .current-chapter{font-size:14px}body[data-reader-state=front] .navigation-hint:after{content:'Нажмите на обложку'}body[data-reader-state=back] .navigation-hint:after{content:'Можно открыть снова'}body[data-reader-state=cover-motion] .navigation-hint:after{content:''}}
-
-/* Closed boards provide their own shadow, without a clipped spread shadow. */
-#book-holder[data-cover-state=front]>.cover,#book-holder[data-cover-state=back]>.cover{box-shadow:inset 0 0 0 3px #322e20,inset 0 0 0 5px #94715c}
-@media print{#book-holder{transform:none!important}#book{clip-path:none!important}#reading-room{overflow:visible}}
+@media print{.book-covers{display:none!important}#book-holder{transform:none!important}#book{clip-path:none!important;visibility:visible!important}#reading-room{overflow:visible}}

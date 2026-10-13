@@ -84,6 +84,15 @@
     flip.showCorner = function (point) {
       if (reducedMotion.matches || peekReturning || !['read', 'fold_corner'].includes(this.getState())) return;
       const rect = renderer.getRect();
+      const direction = this.getDirectionByPoint(renderer.convertToBook(point));
+      if (options.canBoundary?.(direction)) {
+        if (this.getState() === 'fold_corner') {
+          renderer.animation = null;
+          renderer.setBottomPage(null); renderer.setFlippingPage(null); renderer.clearShadow();
+          this.reset(); this.setState('read');
+        }
+        return;
+      }
       if (this.isPointOnCorners(point)) {
         if (this.getCalculation()) return;
         if (!this.start(point)) return;

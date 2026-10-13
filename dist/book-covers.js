@@ -1,10 +1,9 @@
-/* A separate pair of boards around the unchanged twelve-page renderer. */
+/* Rigid boards outside the paper renderer. Each board meets its real endpaper. */
 (() => {
   'use strict';
   const STATES = new Set(['front', 'open', 'back']);
-  const DURATION = 1100;
+  const DURATION = 1250;
   const smooth = t => t * t * t * (t * (t * 6 - 15) + 10);
-  const ornament = `<svg viewBox="0 0 180 70" aria-hidden="true"><path d="M18 40c23 13 38-26 72-9 34-17 49 22 72 9M35 44c20 0 20-16 34-17m76 17c-20 0-20-16-34-17M90 52V15m0 21C68 35 66 16 68 12c19 1 23 17 22 24Zm0 0c22-1 24-20 22-24-19 1-23 17-22 24ZM72 53h36M81 59h18"/><circle cx="90" cy="9" r="2.5"/></svg>`;
 
   window.installBookCovers = function ({
     holder, book, reducedMotion, isMobile, initialState = 'front',
@@ -13,23 +12,12 @@
     let state = STATES.has(initialState) ? initialState : 'front';
     let busy = false, pending = null, visibleSide = state === 'back' ? 'back' : 'front';
     let pageWidth = 0, mobile = false;
-    const underlays = [book, ...Array.from(holder.children).filter(node => node.matches('.cover, .paper-stack'))];
-    const previousClips = new Map(underlays.map(node => [node, node.style.clipPath]));
+    const previousClip = book.style.clipPath;
     const stage = document.createElement('div');
     stage.className = 'book-covers';
     stage.innerHTML = `<div class="book-cover-board">
-      <button class="book-cover-face book-cover-outside" type="button">
-        <span class="book-cover-print">
-          <span class="book-cover-front-design">
-            <span class="book-cover-eyebrow">Настольная книга дизайнера</span>
-            <span class="book-cover-title"><span>Методы</span><span class="book-cover-title-small">подготовки</span><span>эксперта</span></span>
-            <span class="book-cover-ornament">${ornament}</span>
-            <span class="book-cover-date">MMXXVI</span>
-          </span>
-          <span class="book-cover-back-design"><span class="book-cover-ornament">${ornament}</span><span class="book-cover-mark">ARS · DESIGN</span></span>
-        </span>
-      </button>
-      <div class="book-cover-face book-cover-inside book" aria-hidden="true" inert><div class="book-leaf book-cover-clone"></div></div>
+      <button class="book-cover-face book-cover-outside" type="button"><span class="book-cover-print" aria-hidden="true"></span></button>
+      <div class="book-cover-face book-cover-inside" aria-hidden="true" inert><div class="book-cover-clone"></div></div>
     </div>`;
     holder.append(stage);
     const board = stage.querySelector('.book-cover-board');
@@ -40,7 +28,7 @@
     function measure() {
       mobile = isMobile();
       pageWidth = holder.clientWidth / (mobile ? 1 : 2);
-      const scale = parseFloat(getComputedStyle(book).getPropertyValue('--page-scale')) || pageWidth / 560;
+      const scale = pageWidth / 560;
       stage.style.setProperty('--cover-scale', scale);
       stage.style.setProperty('--page-scale', scale);
       stage.style.setProperty('--cover-page-width', pageWidth + 'px');
@@ -51,7 +39,7 @@
       stage.dataset.side = side;
       board.style.left = mobile || side === 'back' ? '0px' : pageWidth + 'px';
       board.style.transformOrigin = side === 'front' ? 'left center' : 'right center';
-      button.setAttribute('aria-label', side === 'front' ? 'Открыть книгу' : 'Вернуться к последней главе');
+      button.setAttribute('aria-label', side === 'front' ? 'Открыть книгу' : 'Открыть задний форзац');
       const surface = getPageSurface(side);
       cloneHost.replaceChildren();
       if (surface) {
@@ -66,19 +54,15 @@
     }
     function pose(side, angle) {
       const direction = side === 'front' ? -1 : 1;
-      const shift = mobile ? 0 : direction * pageWidth / 2 * (1 - angle / 180);
-      const clip = mobile ? 0 : 50 * Math.min(1, Math.max(0, 1 + Math.cos(angle * Math.PI / 180)));
       return {
         board: `rotateY(${direction * angle}deg)`,
-        holder: `translateX(${shift}px)`,
-        clip: side === 'front' ? `inset(-100px 0% -100px ${clip}%)` : `inset(-100px ${clip}% -100px 0%)`
+        holder: `translateX(${mobile ? 0 : direction * pageWidth / 2 * (1 - angle / 180)}px)`
       };
     }
     function applyPose(side, angle) {
       const value = pose(side, angle);
       board.style.transform = value.board;
       holder.style.transform = value.holder;
-      for (const node of underlays) node.style.clipPath = mobile ? previousClips.get(node) : value.clip;
     }
     function setAccess() {
       const unavailable = busy || state !== 'open';
@@ -95,10 +79,10 @@
       configure(state === 'open' ? visibleSide : state);
       applyPose(visibleSide, state === 'open' ? 180 : 0);
       stage.hidden = state === 'open';
-      if (state === 'open') {
-        holder.style.removeProperty('transform');
-        for (const node of underlays) node.style.clipPath = previousClips.get(node);
-      }
+      holder.dataset.coverPhase = state === 'open' ? 'open' : 'closed';
+      delete holder.dataset.turningCover;
+      book.style.clipPath = previousClip;
+      if (state === 'open') holder.style.removeProperty('transform');
       setAccess();
     }
     function complete(operation) {
@@ -107,6 +91,7 @@
       for (const animation of operation.animations) animation.cancel();
       state = operation.target;
       busy = false;
+      // A single synchronous swap: the back face and the physical lining are identical.
       applyStatic();
       onChange({ state, busy });
       if (operation.restoreFocus) {
@@ -124,6 +109,12 @@
       const { side, from, to } = segments[index];
       configure(side);
       stage.hidden = false;
+      holder.dataset.coverPhase = 'turning';
+      holder.dataset.turningCover = side;
+      // Only the stationary flyleaf may show under a turning board. The other
+      // half is represented solely by the board, never a duplicate paper page.
+      book.style.clipPath = mobile ? previousClip
+        : side === 'front' ? 'inset(0 0 0 50%)' : 'inset(0 50% 0 0)';
       applyPose(side, from);
       const frames = Array.from({ length: 121 }, (_, i) => {
         const offset = i / 120;
@@ -132,12 +123,9 @@
       const timing = { duration: DURATION / segments.length, easing: 'linear', fill: 'forwards' };
       operation.animations.push(board.animate(frames.map(frame => ({ offset: frame.offset, transform: frame.board })), timing));
       operation.animations.push(holder.animate(frames.map(frame => ({ offset: frame.offset, transform: frame.holder })), timing));
-      if (!mobile) for (const node of underlays) {
-        operation.animations.push(node.animate(frames.map(frame => ({ offset: frame.offset, clipPath: frame.clip })), timing));
-      }
       Promise.all(operation.animations.map(animation => animation.finished)).then(
         () => animateSegment(operation, segments, index + 1),
-        () => { /* finish() applies the final pose and invalidates this operation. */ }
+        () => { /* finish() atomically applies the final pose. */ }
       );
     }
     function finish() { if (pending) complete(pending); }

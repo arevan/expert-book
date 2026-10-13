@@ -12,7 +12,14 @@
   const book = $('#book'), holder = $('#book-holder');
   let pageFlip, bookMotion, covers;
   const mobileQuery = matchMedia('(max-width: 700px)'), reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-  const maxPage = spreads.length * 2 - 1;
+  // Two physical endpaper spreads surround the six editorial spreads.
+  // 0: front lining, 1: flyleaf, 2..13: content, 14: flyleaf, 15: rear lining.
+  const firstContentPage = 2;
+  const maxPage = spreads.length * 2 + 3;
+  const contentIndex = number => Math.floor((number - firstContentPage) / 2);
+  const isEndpaper = number => number < firstContentPage || number > maxPage - 2;
+  const frontBoundaryPage = () => mobileQuery.matches ? 1 : 0;
+  const backBoundaryPage = () => maxPage - 1;
   let page = 0, busy = false, coverBusy = false, coverState = 'front', lastSize = "";
   const storage = {
     read(key, fallback) { try { return JSON.parse(localStorage.getItem('expert-cookbook:' + key)) ?? fallback; } catch { return fallback; } },
@@ -21,10 +28,12 @@
   const checks = storage.read('checks', {});
   function fromHash() {
     const raw = location.hash.slice(1).split('/');
-    if (raw[0] === 'back-cover') return { state: 'back', page: mobileQuery.matches ? maxPage : maxPage - 1 };
+    if (raw[0] === 'back-cover') return { state: 'back', page: backBoundaryPage() };
+    if (raw[0] === 'front-endpaper') return { state: 'open', page: frontBoundaryPage() };
+    if (raw[0] === 'back-endpaper') return { state: 'open', page: backBoundaryPage() };
     const i = spreads.findIndex(s => s.id === raw[0]);
-    return i < 0 ? { state: 'front', page: 0 }
-      : { state: 'open', page: i * 2 + (mobileQuery.matches && raw[1] === '2' ? 1 : 0) };
+    return i < 0 ? { state: 'front', page: frontBoundaryPage() }
+      : { state: 'open', page: firstContentPage + i * 2 + (mobileQuery.matches && raw[1] === '2' ? 1 : 0) };
   }
   const initialLocation = fromHash();
   page = initialLocation.page;
@@ -33,43 +42,54 @@
     el.querySelectorAll('[data-check]').forEach(button => { button.setAttribute('aria-pressed', !!checks[button.dataset.check]); button.setAttribute('aria-label', button.textContent.trim()); });
   }
   function fill(el, pageNumber) {
-    const spread = spreads[Math.floor(pageNumber / 2)];
+    if (isEndpaper(pageNumber)) {
+      const lining = pageNumber === 0 || pageNumber === maxPage;
+      el.classList.add('endpaper-page', lining ? 'endpaper-lining' : 'endpaper-flyleaf');
+      el.setAttribute('aria-label', pageNumber < firstContentPage ? 'Передний форзац' : 'Задний форзац');
+      return;
+    }
+    const contentPage = pageNumber - firstContentPage;
+    const spread = spreads[contentIndex(pageNumber)];
     const isRight = pageNumber % 2 === 1;
-    el.classList.toggle('title-page', pageNumber === 1);
-    el.classList.toggle('frontispiece', pageNumber === 0);
-    el.classList.toggle('chapter-art-page', pageNumber >= 2 && !isRight);
-    el.classList.toggle('chapter-text-page', pageNumber >= 2 && isRight);
-    el.setAttribute('aria-label', `Страница ${pageNumber + 1}: ${spread.title}`);
-    el.innerHTML = `<div class="running"><span>${pageNumber < 2 ? 'ARS · DESIGN' : 'Методы подготовки эксперта'}</span><span>${spread.chapter ? 'ГЛАВА ' + spread.chapter : 'Том первый'}</span></div><div class="page-content">${isRight ? spread.right : spread.left}</div><div class="folio" aria-hidden="true">${pageNumber + 1}</div>`;
+    el.classList.toggle('title-page', contentPage === 1);
+    el.classList.toggle('frontispiece', contentPage === 0);
+    el.classList.toggle('chapter-art-page', contentPage >= 2 && !isRight);
+    el.classList.toggle('chapter-text-page', contentPage >= 2 && isRight);
+    el.setAttribute('aria-label', `Страница ${contentPage + 1}: ${spread.title}`);
+    el.innerHTML = `<div class="running"><span>${contentPage < 2 ? 'T DESIGN' : 'Методы подготовки эксперта'}</span><span>${spread.chapter ? 'ГЛАВА ' + spread.chapter : 'Том первый'}</span></div><div class="page-content">${isRight ? spread.right : spread.left}</div><div class="folio" aria-hidden="true">${contentPage + 1}</div>`;
     markChecks(el);
   }
   function render() { updateUI(); }
   function updateUI() {
-    const i = Math.floor(page / 2), spread = spreads[i];
+    const i = contentIndex(page), endpaper = isEndpaper(page), spread = endpaper ? null : spreads[i];
+    const endpaperTitle = page < firstContentPage ? 'Передний форзац' : 'Задний форзац';
     const closed = coverState !== 'open', locked = busy || coverBusy;
-    const atStart = page === 0;
-    const atEnd = mobileQuery.matches ? page === maxPage : i === spreads.length - 1;
+    const atStart = page <= frontBoundaryPage(), atEnd = page >= backBoundaryPage();
+    const contentPage = page - firstContentPage;
     $('#current-chapter').hidden = closed;
-    $('#current-chapter').textContent = (spread.chapter ? spread.chapter + '. ' : '') + spread.title;
-    $('#page-count').textContent = closed ? (coverState === 'front' ? 'ТОМ I' : 'MMXXVI')
-      : mobileQuery.matches ? `${String(page + 1).padStart(2, '0')} / ${maxPage + 1}` : `${String(i + 1).padStart(2, '0')} / ${spreads.length}`;
+    $('#current-chapter').textContent = endpaper ? endpaperTitle : (spread.chapter ? spread.chapter + '. ' : '') + spread.title;
+    $('#page-count').textContent = closed ? (coverState === 'front' ? 'ТОМ I' : 'MMXXVI') : endpaper ? ''
+      : mobileQuery.matches ? `${String(contentPage + 1).padStart(2, '0')} / ${spreads.length * 2}`
+      : `${String(i + 1).padStart(2, '0')} / ${spreads.length}`;
     $('#prev').disabled = locked || coverState === 'front';
     $('#next').disabled = locked || coverState === 'back';
-    $('#prev').setAttribute('aria-label', coverState === 'back' ? 'Открыть последнюю главу' : atStart ? 'Закрыть переднюю обложку' : 'Предыдущий разворот');
+    $('#prev').setAttribute('aria-label', coverState === 'back' ? 'Открыть задний форзац' : atStart ? 'Закрыть переднюю обложку' : 'Предыдущий разворот');
     $('#next').setAttribute('aria-label', coverState === 'front' ? 'Открыть книгу' : atEnd ? 'Закрыть книгу' : 'Следующий разворот');
-    $('#notes-open').disabled = closed || coverBusy;
+    $('#notes-open').disabled = closed || coverBusy || endpaper;
     const action = $('#cover-action');
     action.hidden = !closed && !atStart && !atEnd;
     action.disabled = locked;
-    action.textContent = coverState === 'front' ? 'Открыть книгу →' : coverState === 'back' ? '← Вернуться к последней главе' : 'Закрыть книгу';
-    document.querySelectorAll('[data-spread]').forEach(b => b.setAttribute('aria-current', !closed && Number(b.dataset.spread) === i));
+    action.textContent = coverState === 'front' ? 'Открыть книгу →' : coverState === 'back' ? '← Открыть книгу' : 'Закрыть книгу';
+    document.querySelectorAll('[data-spread]').forEach(b => b.setAttribute('aria-current', !closed && !endpaper && Number(b.dataset.spread) === i));
     document.querySelectorAll('[data-cover]').forEach(b => b.setAttribute('aria-current', b.dataset.cover === coverState));
-    const label = closed ? (coverState === 'front' ? 'Передняя обложка' : 'Книга закрыта') : spread.title;
-    $('#announce').textContent = closed ? label : `${spread.title}. ${mobileQuery.matches ? 'Страница ' + (page + 1) + ' из ' + (maxPage + 1) : 'Разворот ' + (i + 1) + ' из ' + spreads.length}`;
-    $('.navigation-hint').innerHTML = coverState === 'front' ? 'Нажмите на обложку или <kbd>→</kbd>' : coverState === 'back' ? '<kbd>←</kbd> Вернуться к последней главе' : 'Листайте <kbd>←</kbd> <kbd>→</kbd> или потяните за угол';
+    const label = closed ? (coverState === 'front' ? 'Передняя обложка' : 'Книга закрыта') : endpaper ? endpaperTitle : spread.title;
+    $('#announce').textContent = closed || endpaper ? label : `${spread.title}. ${mobileQuery.matches ? 'Страница ' + (contentPage + 1) + ' из ' + (spreads.length * 2) : 'Разворот ' + (i + 1) + ' из ' + spreads.length}`;
+    $('.navigation-hint').innerHTML = coverState === 'front' ? 'Нажмите на обложку или <kbd>→</kbd>' : coverState === 'back' ? '<kbd>←</kbd> Открыть книгу' : 'Листайте <kbd>←</kbd> <kbd>→</kbd> или потяните за угол';
     document.body.dataset.readerState = coverBusy ? 'cover-motion' : coverState;
     document.title = `${label} · Методы подготовки эксперта`;
-    const hash = closed ? (coverState === 'front' ? '#cover' : '#back-cover') : '#' + spread.id + (mobileQuery.matches && page % 2 ? '/2' : '');
+    const hash = closed ? (coverState === 'front' ? '#cover' : '#back-cover') : endpaper
+      ? page < firstContentPage ? '#front-endpaper' : '#back-endpaper'
+      : '#' + spread.id + (mobileQuery.matches && page % 2 ? '/2' : '');
     try { history.replaceState(null, '', hash); } catch { /* file previews can restrict history */ }
   }
   function fitBook() {
@@ -88,6 +108,12 @@
     if (pageFlip) {
       pageFlip.getSettings().usePortrait = mobile;
       pageFlip.update();
+      // Portrait view shows the stationary flyleaf; the board lining is offscreen.
+      // Preserve that boundary through resize instead of exposing another leaf.
+      const current = pageFlip.getCurrentPageIndex();
+      const target = coverState === 'front' ? frontBoundaryPage() : coverState === 'back' ? backBoundaryPage()
+        : Math.max(frontBoundaryPage(), Math.min(backBoundaryPage(), current));
+      if (target !== current) pageFlip.turnToPage(target);
       page = pageFlip.getCurrentPageIndex();
       updateUI();
     }
@@ -95,12 +121,20 @@
   }
   function turnTo(target, animate = true) {
     if (busy || coverBusy || !pageFlip) return;
-    target = Math.max(0, Math.min(maxPage, target));
+    target = Math.max(frontBoundaryPage(), Math.min(backBoundaryPage(), target));
     if (!mobileQuery.matches) target -= target % 2;
     if (coverState !== 'open') {
       bookMotion?.suspend();
-      pageFlip.turnToPage(target);
-      covers.transition('open', animate);
+      const boundary = coverState === 'front' ? frontBoundaryPage() : backBoundaryPage();
+      if (target === boundary) {
+        pageFlip.turnToPage(target);
+        covers.transition('open', animate);
+      } else {
+        // A chapter shortcut skips the physical opening, so a leather board
+        // never turns over an unrelated chapter and changes its back face.
+        covers.transition('open', false);
+        pageFlip.turnToPage(target);
+      }
       return;
     }
     if (target === page) return;
@@ -110,24 +144,24 @@
   function closeBook(side, animate = true) {
     if (busy || coverBusy || !covers || coverState === side) return;
     bookMotion.suspend();
-    pageFlip.turnToPage(side === 'front' ? 0 : (mobileQuery.matches ? maxPage : maxPage - 1));
+    pageFlip.turnToPage(side === 'front' ? frontBoundaryPage() : backBoundaryPage());
     covers.transition(side, animate && coverState === 'open');
   }
   function activateCover() {
-    if (coverState === 'front') turnTo(0);
-    else if (coverState === 'back') turnTo(maxPage);
-    else closeBook(page === 0 ? 'front' : 'back');
+    if (coverState === 'front') turnTo(frontBoundaryPage());
+    else if (coverState === 'back') turnTo(backBoundaryPage());
+    else closeBook(page <= frontBoundaryPage() ? 'front' : 'back');
   }
   function next() {
-    if (coverState === 'front') { turnTo(0); return; }
+    if (coverState === 'front') { turnTo(frontBoundaryPage()); return; }
     if (coverState === 'back') return;
-    if (page >= (mobileQuery.matches ? maxPage : maxPage - 1)) closeBook('back');
+    if (page >= backBoundaryPage()) closeBook('back');
     else turnTo(page + (mobileQuery.matches ? 1 : 2));
   }
   function prev() {
-    if (coverState === 'back') { turnTo(maxPage); return; }
+    if (coverState === 'back') { turnTo(backBoundaryPage()); return; }
     if (coverState === 'front') return;
-    if (page === 0) closeBook('front');
+    if (page <= frontBoundaryPage()) closeBook('front');
     else turnTo(page - (mobileQuery.matches ? 1 : 2));
   }
   $('#cover-action').addEventListener('click', activateCover);
@@ -136,10 +170,10 @@
   spreads.forEach((spread, i) => {
     const dot = document.createElement('button'); dot.dataset.spread = i;
     dot.title = `${i + 1}. ${spread.title}`; dot.setAttribute('aria-label', `Разворот ${i + 1}: ${spread.title}`);
-    dot.addEventListener('click', () => turnTo(i * 2)); progress.append(dot);
+    dot.addEventListener('click', () => turnTo(firstContentPage + i * 2)); progress.append(dot);
     const row = document.createElement('button'); row.dataset.spread = i;
     row.innerHTML = `<span class="toc-num">${String(i + 1).padStart(2, '0')}</span><span class="toc-title">${spread.title}</span><span class="toc-page">${i * 2 + 1}</span>`;
-    row.addEventListener('click', () => { $('#toc-dialog').close(); turnTo(i * 2); }); toc.append(row);
+    row.addEventListener('click', () => { $('#toc-dialog').close(); turnTo(firstContentPage + i * 2); }); toc.append(row);
   });
   ['front', 'back'].forEach(side => {
     const dot = document.createElement('button');
@@ -154,8 +188,8 @@
   $('#toc-open').addEventListener('click', () => openDialog('#toc-dialog'));
   $('#help-open').addEventListener('click', () => openDialog('#help-dialog'));
   function openNotes() {
-    if (coverState !== 'open' || coverBusy) return;
-    const spread = spreads[Math.floor(page / 2)];
+    if (coverState !== 'open' || coverBusy || isEndpaper(page)) return;
+    const spread = spreads[contentIndex(page)];
     $('#note-title').textContent = spread.title;
     $('#note-text').value = storage.read('note:' + spread.id, spread.note);
     $('#note-text').dataset.id = spread.id;
@@ -212,16 +246,16 @@
   });
   $('.brand').addEventListener('click', event => { event.preventDefault(); closeBook('front'); });
   fitBook();
-  const sheets = spreads.flatMap((spread, i) => [0, 1].map(side => {
+  const sheets = Array.from({ length: maxPage + 1 }, (_, pageNumber) => {
     const sheet = document.createElement('article');
     sheet.className = 'book-leaf';
     sheet.dataset.density = 'soft';
-    sheet.dataset.page = i * 2 + side;
+    sheet.dataset.page = pageNumber;
     const surface = document.createElement('div');
-    surface.className = 'page ' + (side ? 'right-page' : 'left-page');
-    fill(surface, i * 2 + side);
+    surface.className = 'page ' + (pageNumber % 2 ? 'right-page' : 'left-page');
+    fill(surface, pageNumber);
     sheet.append(surface); book.append(sheet); return sheet;
-  }));
+  });
   pageFlip = new St.PageFlip(book, {
     width: 560, height: 700, size: 'stretch', minWidth: 400, maxWidth: 800,
     minHeight: 100, maxHeight: 1000, autoSize: false, usePortrait: mobileQuery.matches,
@@ -242,13 +276,13 @@
   // revealed paper (3), turning leaf (5). A sibling above #book covers every leaf.
   book.querySelector('.stf__block').append(holder.querySelector('.binding'));
   bookMotion = window.installBookMotion(pageFlip, book, reducedMotion, {
-    canBoundary: direction => coverState === 'open' && !coverBusy && (direction === 1 ? page === 0 : page >= (mobileQuery.matches ? maxPage : maxPage - 1)),
+    canBoundary: direction => coverState === 'open' && !coverBusy && (direction === 1 ? page <= frontBoundaryPage() : page >= backBoundaryPage()),
     onBoundary: direction => direction === 1 ? prev() : next()
   });
   covers = window.installBookCovers({
     holder, book, reducedMotion, isMobile: () => mobileQuery.matches,
     initialState: coverState,
-    getPageSurface: side => sheets[mobileQuery.matches ? page : page - page % 2 + (side === 'back' ? 1 : 0)].querySelector('.page'),
+    getPageSurface: side => sheets[side === 'front' ? 0 : maxPage].querySelector('.page'),
     onChange: state => { coverState = state.state; coverBusy = state.busy; updateUI(); },
     onActivate: activateCover
   });
