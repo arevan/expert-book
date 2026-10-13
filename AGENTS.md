@@ -3,7 +3,7 @@
 Read docs/heroine-continuity.txt before any illustration work.
 The canonical heroine is the upper angel in dist/assets/virtues-engraving-v1.png, not the woman at the table below. Preserve her face and hair in future clothes and armor. Wings/halo apply only to chapter II.
 Use dist/assets/tinkoff-coat-of-arms-reference.png for knight shields.
-The accepted title engraving is dist/assets/studies/title-forge-v1.png: the canonical heroine, hair tied back, shapes her own armor in a smithy. Preserve dist/assets/cookbook-reference.png as the archived original reference. Chapter I uses origins-map-v2.png: the only path from Junior goes to Middle, then Senior. Do not restore the direct Junior-to-Senior bridge. Keep development on localhost; do not deploy without a new user request.
+The accepted title engraving is dist/assets/studies/title-forge-v1.png: the canonical heroine, hair tied back, shapes her own armor in a smithy. Preserve dist/assets/cookbook-reference.png as the archived original reference. Chapter I uses origins-map-v2.png: the only path from Junior goes to Middle, then Senior. Do not restore the direct Junior-to-Senior bridge. Keep development previews on localhost. The user authorized publication to https://arevan.github.io/expert-book/: .github/workflows/pages.yml automatically deploys dist/ after relevant pushes to main. Do not deploy to other hosting without a new user request.
 The app is static HTML/CSS/JS in dist. Run: python3 -m http.server 4173 --bind 127.0.0.1 --directory dist
 Preserve the page-turn behavior and the spine inside .stf__block, below turning pages.
 

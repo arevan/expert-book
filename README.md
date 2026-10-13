@@ -1,6 +1,10 @@
 # expert-book
 
-Локальная книга «Методы подготовки эксперта».
+Интерактивная книга «Методы подготовки эксперта».
+
+Сайт: https://arevan.github.io/expert-book/
+
+GitHub Pages публикует папку `dist/` через `.github/workflows/pages.yml`. Изменения в `dist/` после push в `main` публикуются автоматически; также доступен ручной запуск workflow. В Settings → Pages источником должен быть выбран GitHub Actions.
 
 Запуск из корня проекта:
 
