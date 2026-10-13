@@ -15,19 +15,20 @@
 .endpaper-page:after{
   inset:0;border:0;opacity:1;mix-blend-mode:normal;box-shadow:none;
   background-image:var(--gutter-shadow),linear-gradient(90deg,transparent 93%,#22170b08 96%,#22170b38 100%);
-  background-size:36px 100%,100% 100%;background-repeat:no-repeat;
-  background-position:right -18px top,left top
+  background-size:var(--gutter-width) 100%,100% 100%;background-repeat:no-repeat;
+  background-position:right calc(-.5 * var(--gutter-width)) top,left top
 }
 .endpaper-page.right-page:after{
   background-image:var(--gutter-shadow),linear-gradient(90deg,#22170b38 0%,#22170b0d 2%,transparent 5%);
-  background-position:left -18px top,left top
+  background-position:left calc(-.5 * var(--gutter-width)) top,left top
 }
 /* The binding is one continuous case in every open spread. Endpaper paper
  * reaches the fold; the leather turn-in lives behind it, never in its centre. */
 #book-holder{
   --board-rim:calc(6px * var(--page-scale,1));
   --block-depth:calc(4px * var(--page-scale,1));
-  --gutter-shadow:linear-gradient(90deg,transparent,#21140918 25%,#21140975 49%,#c5ab7828 55%,#21140918 74%,transparent)
+  --gutter-width:52px;
+  --gutter-shadow:linear-gradient(90deg,transparent,#21140905 10%,#21140926 30%,#21140966 44%,#160e0799 49%,#160e075c 51%,#fff0c973 55%,#e5cd961f 63%,#2114091a 73%,transparent)
 }
 /* Two soft lobes establish contact and depth. Their footprint follows the
  * board pose without stacking a second shadow at either animation endpoint. */
@@ -49,7 +50,8 @@
 #book-holder>.cover:before{content:'';position:absolute;inset:0;background:url('assets/paper-grain.svg');opacity:.06;pointer-events:none}
 .book .binding{
   top:var(--surface-y,0px);height:var(--surface-height,100%);
-  width:calc(36px * var(--page-scale,1));left:calc(50% - 18px * var(--page-scale,1));
+  width:calc(var(--gutter-width) * var(--page-scale,1));
+  left:calc(50% - .5 * var(--gutter-width) * var(--page-scale,1));
   background:var(--gutter-shadow);opacity:1
 }
 
