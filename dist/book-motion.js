@@ -14,6 +14,15 @@
     const renderer = app.getRender();
     let gesture = null, peekReturning = false;
 
+    // The incoming surface is known before a hover, drag or click paints its first fold.
+    // This also handles chapter shortcuts, whose target may be non-adjacent.
+    const originalStart = flip.start;
+    flip.start = function (point) {
+      const started = originalStart.call(this, point);
+      options.onFold?.(started ? this.bottomPage : null);
+      return started;
+    };
+
     // These hooks are deliberately confined to this adapter and the pinned
     // vendor version. The source geometry, page data and vendor file stay intact.
     flip.animateFlippingTo = function (start, dest, turned, reset = true) {
@@ -211,6 +220,7 @@
         peekReturning = false;
         renderer.setBottomPage(null); renderer.setFlippingPage(null); renderer.clearShadow();
         flip.reset(); flip.setState('read');
+        options.onFold?.(null);
       }
     };
   };

@@ -21,6 +21,7 @@
   const frontBoundaryPage = () => mobileQuery.matches ? 1 : 0;
   const backBoundaryPage = () => maxPage - 1;
   let page = 0, busy = false, coverBusy = false, coverState = 'front', lastSize = "";
+  let settledPage = 0, motionState = 'read', incomingFoldPage = null;
   const storage = {
     read(key, fallback) { try { return JSON.parse(localStorage.getItem('expert-cookbook:' + key)) ?? fallback; } catch { return fallback; } },
     write(key, value) { try { localStorage.setItem('expert-cookbook:' + key, JSON.stringify(value)); return true; } catch { return false; } }
@@ -37,6 +38,7 @@
   }
   const initialLocation = fromHash();
   page = initialLocation.page;
+  settledPage = page;
   coverState = initialLocation.state;
   function markChecks(el) {
     el.querySelectorAll('[data-check]').forEach(button => { button.setAttribute('aria-pressed', !!checks[button.dataset.check]); button.setAttribute('aria-label', button.textContent.trim()); });
@@ -63,7 +65,11 @@
   function updateUI() {
     const i = contentIndex(page), endpaper = isEndpaper(page), spread = endpaper ? null : spreads[i];
     const endpaperTitle = page < firstContentPage ? 'Передний форзац' : 'Задний форзац';
-    holder.dataset.endpaper = endpaper ? (page < firstContentPage ? 'front' : 'back') : 'none';
+    // Keep the physical block tied to the settled spread, not a pending flip event.
+    // Hide a block early if the fold exposes a board lining beneath the turning leaf.
+    holder.dataset.endpaper = isEndpaper(settledPage) ? (settledPage < firstContentPage ? 'front' : 'back') : 'none';
+    holder.dataset.stackLeft = String(!mobileQuery.matches && settledPage >= firstContentPage && incomingFoldPage !== 0);
+    holder.dataset.stackRight = String(mobileQuery.matches || (settledPage < backBoundaryPage() && incomingFoldPage !== maxPage));
     const closed = coverState !== 'open', locked = busy || coverBusy;
     const atStart = page <= frontBoundaryPage(), atEnd = page >= backBoundaryPage();
     const contentPage = page - firstContentPage;
@@ -109,6 +115,7 @@
     if (pageFlip) {
       pageFlip.getSettings().usePortrait = mobile;
       pageFlip.update();
+      book.style.setProperty('--page-scale', pageFlip.getRender().getRect().pageWidth / 560);
       // Portrait view shows the stationary flyleaf; the board lining is offscreen.
       // Preserve that boundary through resize instead of exposing another leaf.
       const current = pageFlip.getCurrentPageIndex();
@@ -139,8 +146,10 @@
       return;
     }
     if (target === page) return;
-    if (!animate || reducedMotion.matches) pageFlip.turnToPage(target);
-    else pageFlip.flip(target, 'bottom');
+    if (!animate || reducedMotion.matches) {
+      bookMotion?.suspend();
+      pageFlip.turnToPage(target);
+    } else pageFlip.flip(target, 'bottom');
   }
   function closeBook(side, animate = true) {
     if (busy || coverBusy || !covers || coverState === side) return;
@@ -265,18 +274,33 @@
     clickEventForward: true, useMouseEvents: false, swipeDistance: 30
   });
   pageFlip.on('flip', event => {
-    page = event.data; updateUI();
+    page = event.data;
+    // turnToPage is synchronous; animated turns settle on the following read event.
+    if (motionState === 'read') { settledPage = page; incomingFoldPage = null; }
+    updateUI();
   });
   pageFlip.on('changeState', event => {
-    busy = event.data === 'flipping' || event.data === 'user_fold';
-    book.dataset.state = event.data;
+    // Vendor emits this event before assigning its internal state.
+    motionState = event.data;
+    if (motionState === 'read') {
+      settledPage = pageFlip.getCurrentPageIndex();
+      incomingFoldPage = null;
+    }
+    busy = motionState === 'flipping' || motionState === 'user_fold';
+    book.dataset.state = motionState;
     updateUI();
   });
   pageFlip.loadFromHTML(sheets);
+  book.style.setProperty('--page-scale', pageFlip.getRender().getRect().pageWidth / 560);
   // Keep the spine in the renderer's layer stack: static paper (1), spine (2),
   // revealed paper (3), turning leaf (5). A sibling above #book covers every leaf.
   book.querySelector('.stf__block').append(holder.querySelector('.binding'));
   bookMotion = window.installBookMotion(pageFlip, book, reducedMotion, {
+    onFold: bottomPage => {
+      const number = bottomPage?.getElement()?.dataset.page;
+      incomingFoldPage = number == null ? null : Number(number);
+      updateUI();
+    },
     canBoundary: direction => coverState === 'open' && !coverBusy && (direction === 1 ? page <= frontBoundaryPage() : page >= backBoundaryPage()),
     onBoundary: direction => direction === 1 ? prev() : next()
   });
@@ -284,6 +308,7 @@
     holder, book, reducedMotion, isMobile: () => mobileQuery.matches,
     initialState: coverState,
     getPageSurface: side => sheets[side === 'front' ? 0 : maxPage].querySelector('.page'),
+    getPageGeometry: () => pageFlip.getRender().getRect(),
     onChange: state => { coverState = state.state; coverBusy = state.busy; updateUI(); },
     onActivate: activateCover
   });

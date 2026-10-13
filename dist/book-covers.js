@@ -7,7 +7,7 @@
 
   window.installBookCovers = function ({
     holder, book, reducedMotion, isMobile, initialState = 'front',
-    getPageSurface, onChange = () => {}, onActivate = () => {}
+    getPageSurface, getPageGeometry, onChange = () => {}, onActivate = () => {}
   }) {
     let state = STATES.has(initialState) ? initialState : 'front';
     let busy = false, pending = null, visibleSide = state === 'back' ? 'back' : 'front';
@@ -27,7 +27,20 @@
 
     function measure() {
       mobile = isMobile();
-      pageWidth = holder.clientWidth / (mobile ? 1 : 2);
+      // Use the renderer's fractional origin and dimensions, not rounded clientWidth.
+      const rect = getPageGeometry();
+      pageWidth = rect.pageWidth;
+      const surfaceX = rect.left + (mobile ? pageWidth : 0);
+      holder.style.setProperty('--page-scale', pageWidth / 560);
+      holder.style.setProperty('--surface-x', surfaceX + 'px');
+      holder.style.setProperty('--surface-y', rect.top + 'px');
+      holder.style.setProperty('--surface-width', (mobile ? pageWidth : rect.width) + 'px');
+      holder.style.setProperty('--surface-height', rect.height + 'px');
+      stage.style.inset = 'auto';
+      stage.style.left = (rect.left + (mobile ? pageWidth : 0)) + 'px';
+      stage.style.top = rect.top + 'px';
+      stage.style.width = (mobile ? pageWidth : rect.width) + 'px';
+      stage.style.height = rect.height + 'px';
       const scale = pageWidth / 560;
       stage.style.setProperty('--cover-scale', scale);
       stage.style.setProperty('--page-scale', scale);
@@ -113,8 +126,10 @@
       holder.dataset.turningCover = side;
       // Only the stationary flyleaf may show under a turning board. The other
       // half is represented solely by the board, never a duplicate paper page.
+      const rect = getPageGeometry(), foldX = rect.left + rect.pageWidth;
       book.style.clipPath = mobile ? previousClip
-        : side === 'front' ? 'inset(0 0 0 50%)' : 'inset(0 50% 0 0)';
+        : side === 'front' ? `inset(-24px -24px -24px ${foldX}px)`
+          : `inset(-24px ${book.getBoundingClientRect().width - foldX}px -24px -24px)`;
       applyPose(side, from);
       const frames = Array.from({ length: 121 }, (_, i) => {
         const offset = i / 120;
