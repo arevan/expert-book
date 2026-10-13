@@ -1,5 +1,7 @@
 Mode: built-in Imagegen, reference-guided variant.
-Status: preview candidate only; not activated as the title engraving.
+Status: accepted by the user on 14 October 2026; active title engraving.
+Active asset: dist/assets/studies/title-forge-v1.png
+Archived original reference: dist/assets/cookbook-reference.png
 Output: title-forge-engraving-v1.png
 
 Use case: identity-preserve / historical-scene.
