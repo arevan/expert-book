@@ -25,3 +25,5 @@ python3 -m http.server 4173 --bind 127.0.0.1 --directory dist
 Титульная гравюра — `dist/assets/studies/title-forge-v1.png`: героиня с собранными волосами делает свои доспехи в кузне. Исходная кухонная иллюстрация сохранена в `dist/assets/cookbook-reference.png` как архивный референс.
 
 Референс героини: `dist/assets/virtues-engraving-v1.png`. Правила серии — `docs/heroine-continuity.txt`.
+
+Эксперимент в главе IV: нажмите на гравюру боя — первый кадр сгорает, открывая второй. Повторное нажатие возвращает первый кадр. Реализация и источник идеи описаны в `docs/duel-burn-study.txt`.

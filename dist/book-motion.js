@@ -18,6 +18,7 @@
     // This also handles chapter shortcuts, whose target may be non-adjacent.
     const originalStart = flip.start;
     flip.start = function (point) {
+      options.onBeforeFold?.();
       const started = originalStart.call(this, point);
       options.onFold?.(started ? this.bottomPage : null);
       return started;

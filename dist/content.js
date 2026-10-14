@@ -60,7 +60,19 @@
     },
     {
       id: 'delivery', chapter: 'IV', title: 'Испытание боем',
-      left: illustration('studies/duel-windup-v1.png', 'Старинная гравюра: героиня-рыцарь справа и рыцарь в чёрных доспехах слева замахиваются мечами перед ударом. На её щите — исторический герб Тинькофф, на щите противника — косматый бес с круглыми глазами.', 'Отстоять замысел и довести его до результата.'),
+      left: `<figure class="chapter-illustration">
+        <button class="chapter-plate duel-plate" type="button" data-duel-burn aria-describedby="duel-scene" aria-label="Сжечь гравюру и открыть второй кадр боя">
+          <span class="duel-art">
+            <img class="duel-after" src="assets/studies/duel-strike-v1.png" alt="" aria-hidden="true" draggable="false">
+            <img class="duel-before" src="assets/studies/duel-windup-v1.png" alt="" aria-hidden="true" draggable="false">
+            <canvas hidden aria-hidden="true"></canvas>
+          </span>
+          <span class="duel-cue" aria-hidden="true">Нажмите на гравюру</span>
+        </button>
+        <figcaption>Отстоять замысел и довести его до результата.</figcaption>
+        <span id="duel-scene" class="sr-only">Героиня-рыцарь справа и рыцарь в чёрных доспехах слева замахиваются мечами. На её щите герб Тинькофф, на щите противника косматый бес.</span>
+        <span class="sr-only duel-status" role="status" aria-live="polite"></span>
+      </figure>`,
       right: chapterText('IV', 'Испытание боем', 'От замысла до результата', [
         'Диалог с бизнесом о пользе для пользователя.',
         'Как отстоять видение в диалоге с бизнесом.',

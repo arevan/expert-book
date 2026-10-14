@@ -10,7 +10,7 @@
   };
   const spreads = [title, ...(window.BOOK_CONTENT || [])];
   const book = $('#book'), holder = $('#book-holder');
-  let pageFlip, bookMotion, covers;
+  let pageFlip, bookMotion, covers, duelBurn;
   const mobileQuery = matchMedia('(max-width: 700px)'), reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   // Two physical endpaper spreads surround the six editorial spreads.
   // 0: front lining, 1: flyleaf, 2..13: content, 14: flyleaf, 15: rear lining.
@@ -106,6 +106,7 @@
     const scale = Math.max(.1, Math.min((room.clientWidth - (mobile ? 48 : 168)) / width, (room.clientHeight - 38) / 700, 1.35));
     const sizeKey = `${mobile}:${scale.toFixed(5)}`;
     if (lastSize === sizeKey) return;
+    duelBurn?.finish();
     covers?.finish();
     bookMotion?.finish();
     lastSize = sizeKey;
@@ -129,6 +130,7 @@
   }
   function turnTo(target, animate = true) {
     if (busy || coverBusy || !pageFlip) return;
+    duelBurn?.finish();
     target = Math.max(frontBoundaryPage(), Math.min(backBoundaryPage(), target));
     if (!mobileQuery.matches) target -= target % 2;
     if (coverState !== 'open') {
@@ -153,6 +155,7 @@
   }
   function closeBook(side, animate = true) {
     if (busy || coverBusy || !covers || coverState === side) return;
+    duelBurn?.finish();
     bookMotion.suspend();
     pageFlip.turnToPage(side === 'front' ? frontBoundaryPage() : backBoundaryPage());
     covers.transition(side, animate && coverState === 'open');
@@ -296,6 +299,7 @@
   // revealed paper (3), turning leaf (5). A sibling above #book covers every leaf.
   book.querySelector('.stf__block').append(holder.querySelector('.binding'));
   bookMotion = window.installBookMotion(pageFlip, book, reducedMotion, {
+    onBeforeFold: () => duelBurn?.finish(),
     onFold: bottomPage => {
       const number = bottomPage?.getElement()?.dataset.page;
       incomingFoldPage = number == null ? null : Number(number);
@@ -311,6 +315,14 @@
     getPageGeometry: () => pageFlip.getRender().getRect(),
     onChange: state => { coverState = state.state; coverBusy = state.busy; updateUI(); },
     onActivate: activateCover
+  });
+  duelBurn = window.installDuelBurn({
+    root: book, reducedMotion,
+    beforeActivate: () => {
+      if (busy || coverBusy || coverState !== 'open') return false;
+      bookMotion.suspend();
+      return true;
+    }
   });
   book.dataset.state ||= 'read';
   new ResizeObserver(fitBook).observe($('#reading-room'));
