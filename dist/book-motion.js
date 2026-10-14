@@ -92,7 +92,7 @@
     };
 
     flip.showCorner = function (point) {
-      if (reducedMotion.matches || peekReturning || !['read', 'fold_corner'].includes(this.getState())) return;
+      if (options.canPreview?.() === false || reducedMotion.matches || peekReturning || !['read', 'fold_corner'].includes(this.getState())) return;
       const rect = renderer.getRect();
       const direction = this.getDirectionByPoint(renderer.convertToBook(point));
       if (options.canBoundary?.(direction)) {

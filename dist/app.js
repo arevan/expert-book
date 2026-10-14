@@ -106,7 +106,6 @@
     const scale = Math.max(.1, Math.min((room.clientWidth - (mobile ? 48 : 168)) / width, (room.clientHeight - 38) / 700, 1.35));
     const sizeKey = `${mobile}:${scale.toFixed(5)}`;
     if (lastSize === sizeKey) return;
-    duelBurn?.finish();
     covers?.finish();
     bookMotion?.finish();
     lastSize = sizeKey;
@@ -127,12 +126,14 @@
       updateUI();
     }
     covers?.sync();
+    duelBurn?.resize();
   }
   function turnTo(target, animate = true) {
     if (busy || coverBusy || !pageFlip) return;
-    duelBurn?.finish();
     target = Math.max(frontBoundaryPage(), Math.min(backBoundaryPage(), target));
     if (!mobileQuery.matches) target -= target % 2;
+    if (coverState === 'open' && target === page) return;
+    duelBurn?.finish();
     if (coverState !== 'open') {
       bookMotion?.suspend();
       const boundary = coverState === 'front' ? frontBoundaryPage() : backBoundaryPage();
@@ -299,6 +300,7 @@
   // revealed paper (3), turning leaf (5). A sibling above #book covers every leaf.
   book.querySelector('.stf__block').append(holder.querySelector('.binding'));
   bookMotion = window.installBookMotion(pageFlip, book, reducedMotion, {
+    canPreview: () => !duelBurn?.isActive(),
     onBeforeFold: () => duelBurn?.finish(),
     onFold: bottomPage => {
       const number = bottomPage?.getElement()?.dataset.page;
