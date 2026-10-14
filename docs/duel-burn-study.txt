@@ -1,6 +1,7 @@
 Chapter IV: experimental burning-paper transition
 
 Interaction: tap/click the duel engraving to burn the windup image from the pointer location and reveal the accepted strike image. Enter/Space starts from the center. A second activation restores the first frame; a third starts the burn again.
+Gesture ownership: the whole duel figure, including its mount outline and caption, is excluded from page-turn taps, drags and corner previews. A pointer movement over 8 CSS pixels cancels burn activation; keyboard activation remains available.
 Duration: 3600ms. The illustration mount, caption and page are unaffected.
 Reduced motion: immediate reveal. If WebGL is unavailable: 380ms dissolve. Decode failures keep the first frame and permit retry.
 Navigation, resizing, hidden document and an incoming page fold finish the effect to a static image before any page clone is made. No animation loop runs while idle.

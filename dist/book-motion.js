@@ -123,7 +123,8 @@
       const box = element.getBoundingClientRect();
       return { x: event.clientX - box.left, y: event.clientY - box.top };
     };
-    const interactive = target => target.closest('button,a,input,textarea,select');
+    // Illustration interactions own their whole mounted area, including captions.
+    const interactive = target => target.closest('button,a,input,textarea,select,[data-book-interactive]');
     element.addEventListener('pointerdown', event => {
       if (!event.isPrimary || event.button !== 0 || interactive(event.target) || flip.getState() === 'flipping') return;
       const point = pointOf(event);
@@ -156,7 +157,12 @@
     element.addEventListener('pointermove', event => {
       const point = pointOf(event);
       if (!gesture) {
-        if (event.pointerType === 'mouse' && !interactive(event.target)) flip.showCorner(point);
+        if (event.pointerType === 'mouse') {
+          // Moving from a page corner into an interactive area cancels its peek.
+          if (interactive(event.target)) {
+            if (flip.getState() === 'fold_corner') flip.showCorner({ x: -100, y: -100 });
+          } else flip.showCorner(point);
+        }
         return;
       }
       if (gesture.id !== event.pointerId) return;

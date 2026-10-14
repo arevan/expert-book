@@ -1,4 +1,6 @@
-/* Keep the existing mounted-engraving footprint and its caption. */
+/* Padding reserves the mount outline inside the non-turning hit area.
+ * Negative margins keep the engraving and caption in their existing positions. */
+.chapter-illustration[data-book-interactive]{box-sizing:content-box;padding:6px;margin:-6px;touch-action:manipulation}
 .duel-plate{display:block;padding:0;color:var(--ink);touch-action:manipulation;cursor:pointer;text-align:center}
 .duel-art{position:relative;display:block;height:100%;max-width:100%;aspect-ratio:1122 / 1402;margin:auto;mix-blend-mode:multiply}
 .duel-art img,.duel-art canvas{position:absolute;inset:0;display:block;width:100%;height:100%;pointer-events:none;mix-blend-mode:normal}

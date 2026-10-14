@@ -60,7 +60,7 @@
     },
     {
       id: 'delivery', chapter: 'IV', title: 'Испытание боем',
-      left: `<figure class="chapter-illustration">
+      left: `<figure class="chapter-illustration" data-book-interactive>
         <button class="chapter-plate duel-plate" type="button" data-duel-burn aria-describedby="duel-scene" aria-label="Сжечь гравюру и открыть второй кадр боя">
           <span class="duel-art">
             <img class="duel-after" src="assets/studies/duel-strike-v1.png" alt="" aria-hidden="true" draggable="false">

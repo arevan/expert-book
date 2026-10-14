@@ -236,7 +236,23 @@
       }
       frame = requestAnimationFrame(tick);
     }
-    plate.addEventListener('click', activate);
+    // A swipe/drag across the engraving must not become a burn/reset click.
+    let press = null, dragged = false;
+    plate.addEventListener('pointerdown', event => {
+      if (!event.isPrimary || event.button !== 0) return;
+      press = { id: event.pointerId, x: event.clientX, y: event.clientY };
+      dragged = false;
+    });
+    plate.addEventListener('pointermove', event => {
+      if (press?.id === event.pointerId && Math.hypot(event.clientX - press.x, event.clientY - press.y) > 8) dragged = true;
+    });
+    plate.addEventListener('pointerup', () => { press = null; });
+    plate.addEventListener('pointercancel', () => { press = null; dragged = true; });
+    plate.addEventListener('pointerleave', () => { if (press) dragged = true; });
+    plate.addEventListener('click', event => {
+      if (event.detail !== 0 && dragged) return;
+      activate(event);
+    });
     canvas.addEventListener('webglcontextlost', event => {
       event.preventDefault();
       finish();
