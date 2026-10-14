@@ -1,12 +1,12 @@
-Chapter IV: experimental burning-paper transition
+Chapter IV: three-frame burning-paper sequence
 
-Interaction: tap/click the duel engraving to burn the windup image from the pointer location and reveal the accepted strike image. Enter/Space starts from the center. Every activation burns the currently visible frame to reveal the other one, including the second-to-first direction. Further taps during loading/burning are ignored.
+Interaction: tap/click the engraving to cycle windup → negotiation with the demon → strike → windup. Every activation burns the currently visible frame to reveal the next one, including the last-to-first wrap. The static cue and button label are always «Нажмите на гравюру». Enter/Space starts from the center. Further taps during loading/burning are ignored. Each frame has its own accessible scene description; aria-busy and a live status expose progress without renaming the button.
 Gesture ownership: the whole duel figure, including its mount outline and caption, is excluded from page-turn taps, drags and corner previews. A pointer movement over 8 CSS pixels cancels burn activation; keyboard activation remains available.
 Duration: 3600ms. The illustration mount, caption and page are unaffected.
 Reduced motion: a shorter 1200ms burn without flickering embers. If WebGL is unavailable or its context is lost: Canvas 2D continues the same noise/char/ember burn, never a dissolve. Decode/render failures retain the current frame and permit retry.
 Intentional navigation and an incoming page fold commit the destination to a static DOM image before cloning. Corner previews are disabled only while the burn is active; hovering never commits it. Resize redraws at the current progress. Hidden tabs pause and resume; time is capped per frame so a browser stall cannot skip the effect. No animation loop runs while idle or hidden. Selecting the current spread is a no-op.
 
-Regression tests: node --test tests/duel-burn.test.cjs. Covers repeated forward/reverse transitions, rapid taps, resize, background/resume, navigation, image decode failure/cancellation, reduced motion, no WebGL and context loss.
+Regression tests: node --test tests/duel-burn.test.cjs. Covers repeated three-frame cycles and last-to-first transitions, rapid taps, resize, background/resume, navigation, image decode failure/cancellation, reduced motion, no WebGL and context loss.
 
 Reference:
 https://github.com/miskatonicstudio/godot-experiments/tree/master/shaders/burning_paper

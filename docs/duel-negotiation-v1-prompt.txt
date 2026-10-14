@@ -1,0 +1,16 @@
+Mode: built-in image_gen, text-only edit of business-temptation-v1.png.
+Output: duel-negotiation-v1.png
+
+Use case: text-localization / precise text edit.
+Edit the attached antique engraving. Change ONLY the text inside the pale speech balloon. Preserve the entire image composition, the same woman knight's face and hair, armor, shaggy round-eyed demon, gestures, stone architecture, sepia palette, fine copperplate hatching, paper texture, double rectangular border and image dimensions. The new phrase is longer: use three balanced centered lines in the same black slightly italic lettering, comfortably fitting inside the balloon; if necessary enlarge the balloon vertically a small amount, without covering either face, and retain the tail pointing at the demon.
+
+Replace the old phrase completely with these EXACT Russian words, including punctuation:
+Давай откажемся от всех анимаций,
+чтобы уложиться в сроки.
+
+This is one continuous sentence, allow a three-line layout such as:
+Давай откажемся
+от всех анимаций,
+чтобы уложиться в сроки.
+
+No quotation marks, no other captions. Maintain high legibility. Do NOT change any other part of the illustration. One finished portrait engraving, opaque parchment background.

@@ -125,7 +125,6 @@
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-        gl.uniform1i(gl.getUniformLocation(program, index ? 'u_after' : 'u_before'), index);
       });
       const uniforms = Object.fromEntries(['origin', 'aspect', 'reach', 'progress', 'time', 'calm', 'before', 'after'].map(name => [name, gl.getUniformLocation(program, 'u_' + name)]));
       return {
@@ -140,7 +139,7 @@
         draw(progress, seconds, origin, from, calm) {
           if (gl.isContextLost()) throw new Error('WebGL context lost');
           gl.uniform1i(uniforms.before, from);
-          gl.uniform1i(uniforms.after, 1 - from);
+          gl.uniform1i(uniforms.after, (from + 1) % images.length);
           gl.uniform1f(uniforms.calm, calm ? 1 : 0);
           const aspect = images[0].naturalWidth / images[0].naturalHeight;
           const reach = Math.hypot(Math.max(origin[0], 1 - origin[0]) * aspect, Math.max(origin[1], 1 - origin[1]));
@@ -209,7 +208,7 @@
           }
           previousOrigin = origin;
         }
-        const before = pixels[from], after = pixels[1 - from], out = result.data;
+        const before = pixels[from], after = pixels[(from + 1) % images.length], out = result.data;
         const reach = Math.hypot(Math.max(origin[0], 1 - origin[0]) * aspect, Math.max(origin[1], 1 - origin[1]));
         const front = mix(-.13, reach + .17, progress ** .88);
         const flicker = calm ? .82 : .82 + .12 * Math.sin(seconds * 17);
@@ -242,7 +241,7 @@
     const plate = root.querySelector('[data-duel-burn]');
     if (!plate) return { finish() {}, resize() {}, isActive: () => false };
     const art = plate.querySelector('.duel-art');
-    const images = [plate.querySelector('.duel-before'), plate.querySelector('.duel-after')];
+    const images = [...plate.querySelectorAll('.duel-frame')];
     let canvas = plate.querySelector('canvas');
     const hint = plate.querySelector('.duel-cue');
     const status = plate.closest('figure').querySelector('.duel-status');
@@ -253,22 +252,20 @@
       phase = value;
       plate.dataset.burnState = value;
       plate.dataset.burnFrame = String(current);
-      plate.setAttribute('aria-label', value === 'loading' ? 'Подготовка гравюры' : value === 'burning' ? 'Гравюра сгорает'
-        : current ? 'Сжечь гравюру и вернуть первый кадр боя' : 'Сжечь гравюру и открыть второй кадр боя');
+      plate.setAttribute('aria-label', 'Нажмите на гравюру');
       plate.setAttribute('aria-busy', String(isActive()));
-      hint.textContent = current ? 'Сжечь и вернуть первый кадр' : 'Нажмите на гравюру';
+      hint.textContent = 'Нажмите на гравюру';
     }
     function settle(index) {
       ++epoch;
       cancelAnimationFrame(frame); frame = 0; run = null;
       current = index;
       setPhase(current ? 'revealed' : 'ready');
+      images.forEach((img, frameIndex) => { img.hidden = frameIndex !== current; });
       canvas.hidden = true;
       plate.dataset.burnProgress = '1';
-      status.textContent = current ? 'Открыт второй кадр. Нажмите, чтобы через сгорание вернуть первый.' : 'Открыт первый кадр. Нажмите, чтобы через сгорание открыть второй.';
-      description.textContent = current
-        ? 'Второй кадр: чёрный рыцарь наносит удар мечом в бок героини. Она остаётся на ногах с поднятым мечом. Гравюра без крови.'
-        : 'Героиня-рыцарь справа и рыцарь в чёрных доспехах слева замахиваются мечами. На её щите герб Тинькофф, на щите противника косматый бес.';
+      status.textContent = `Открыт кадр ${current + 1} из ${images.length}.`;
+      description.textContent = images[current].dataset.description;
     }
     // Only intentional navigation commits a partial burn before page cloning.
     function finish() { if (isActive()) settle(phase === 'burning' ? run.to : current); }
@@ -323,7 +320,7 @@
         renderer ||= createRenderer(canvas, images);
         if (!renderer) usePaperRenderer();
         plate.dataset.burnRenderer = renderer.kind;
-        run = { from: current, to: 1 - current, origin, elapsed: 0, lastTime: null,
+        run = { from: current, to: (current + 1) % images.length, origin, elapsed: 0, lastTime: null,
           duration: reducedMotion.matches ? 1200 : 3600, calm: reducedMotion.matches };
         setPhase('burning');
         canvas.hidden = false;

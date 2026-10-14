@@ -4,11 +4,9 @@
 .duel-plate{display:block;padding:0;color:var(--ink);touch-action:manipulation;cursor:pointer;text-align:center}
 .duel-art{position:relative;display:block;height:100%;max-width:100%;aspect-ratio:1122 / 1402;margin:auto;mix-blend-mode:multiply}
 .duel-art img,.duel-art canvas{position:absolute;inset:0;display:block;width:100%;height:100%;pointer-events:none;mix-blend-mode:normal}
-.duel-art .duel-after{z-index:0}
-.duel-art .duel-before{z-index:1}
+.duel-art .duel-frame{z-index:1}
 .duel-art canvas{z-index:2}
-.duel-art canvas[hidden]{display:none}
-.duel-plate[data-burn-frame="1"] .duel-before{visibility:hidden}
+.duel-art .duel-frame[hidden],.duel-art canvas[hidden]{display:none}
 .duel-plate:focus-visible{outline:2px solid #9c4636;outline-offset:8px}
 .duel-cue{position:absolute;z-index:3;left:50%;bottom:15px;transform:translateX(-50%);padding:7px 12px;white-space:nowrap;border:1px solid #77654a77;background:#eee3cbed;color:#514531;font:italic 15px/1.2 var(--serif);box-shadow:0 2px 8px #20140b24;opacity:0;transition:opacity .2s;pointer-events:none}
 .duel-plate:is(:hover,:focus-visible) .duel-cue{opacity:1}
